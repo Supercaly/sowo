@@ -1,5 +1,4 @@
 fun test() {
     var foo: int = 420;
     var bar: int = 69;
-    var baz: int = foo + bar;
 }

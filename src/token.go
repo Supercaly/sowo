@@ -24,6 +24,7 @@ const (
 	CloseCurly
 	Var
 	Colon
+	Comma
 	Equal
 	Semicolon
 	Plus
@@ -48,6 +49,8 @@ func (tt TokenType) String() (s string) {
 		s = "Var"
 	case Colon:
 		s = "Colon"
+	case Comma:
+		s = "Comma"
 	case Equal:
 		s = "Equal"
 	case Semicolon:
