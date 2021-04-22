@@ -1,4 +1,4 @@
-package tokenizer
+package src
 
 import (
 	"fmt"
@@ -63,7 +63,7 @@ func (lex *Lexer) Tokenize() {
 				lex.Input.ChopOff(1)
 				lex.Tokens = append(lex.Tokens, Token{Plus, "+"})
 			default:
-				log.Fatalf("Unknown token %b", lex.Input.First())
+				log.Fatalf("Unknown token %q", lex.Input.First())
 			}
 		}
 		lex.Input.TrimSpaceAndNewLine()

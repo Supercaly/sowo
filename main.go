@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 
-	tok "github.com/Supercaly/sowo/tokenizer"
+	sowo "github.com/Supercaly/sowo/src"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 		log.Fatalf("Error opening file %s", filePath)
 	}
 
-	lexer := tok.Lexer{Input: tok.Input(string(content))}
+	lexer := sowo.Lexer{Input: sowo.Input(string(content))}
 	lexer.Tokenize()
 	lexer.DumpTokens()
 }
