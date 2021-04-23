@@ -1,0 +1,5 @@
+fun main() {
+    var f: int = 1;
+    var g: int = 2;
+    var h: int = 3;
+}
