@@ -2,7 +2,6 @@ package src
 
 import (
 	"fmt"
-	"log"
 	"unicode"
 )
 
@@ -12,15 +11,18 @@ type Lexer struct {
 	Input InputStr
 	// List of tokens.
 	Tokens []Token
+	// Instance of error reporter
+	Reporter Reporter
 }
 
 // Converts the program string in input to a list of tokens
 func (lex *Lexer) Tokenize() {
-	lex.Input.TrimSpaceAndNewLine()
+	source := lex.Input
+	source.TrimSpaceAndNewLine()
 
-	for !lex.Input.IsEmpty() {
-		if isSymbolStart(lex.Input.First()) {
-			textSymbol := lex.Input.ChopWhile(isSymbol)
+	for !source.IsEmpty() {
+		if isSymbolStart(source.First()) {
+			textSymbol := source.ChopWhile(isSymbol)
 
 			switch textSymbol {
 			case "fun":
@@ -30,40 +32,40 @@ func (lex *Lexer) Tokenize() {
 			default:
 				lex.Tokens = append(lex.Tokens, Token{Symbol, textSymbol})
 			}
-		} else if unicode.IsNumber(lex.Input.First()) {
-			numberSymbol := lex.Input.ChopWhile(isNumber)
+		} else if unicode.IsNumber(source.First()) {
+			numberSymbol := source.ChopWhile(isNumber)
 			lex.Tokens = append(lex.Tokens, Token{NumberConst, numberSymbol})
 		} else {
-			switch lex.Input.First() {
+			switch source.First() {
 			case '(':
-				lex.Input.ChopOff(1)
+				source.ChopOff(1)
 				lex.Tokens = append(lex.Tokens, Token{OpenParen, "("})
 			case ')':
-				lex.Input.ChopOff(1)
+				source.ChopOff(1)
 				lex.Tokens = append(lex.Tokens, Token{CloseParen, ")"})
 			case '{':
-				lex.Input.ChopOff(1)
+				source.ChopOff(1)
 				lex.Tokens = append(lex.Tokens, Token{OpenCurly, "{"})
 			case '}':
-				lex.Input.ChopOff(1)
+				source.ChopOff(1)
 				lex.Tokens = append(lex.Tokens, Token{CloseCurly, "}"})
 			case ':':
-				lex.Input.ChopOff(1)
+				source.ChopOff(1)
 				lex.Tokens = append(lex.Tokens, Token{Colon, ":"})
 			case ';':
-				lex.Input.ChopOff(1)
+				source.ChopOff(1)
 				lex.Tokens = append(lex.Tokens, Token{Semicolon, ";"})
 			case '=':
-				lex.Input.ChopOff(1)
+				source.ChopOff(1)
 				lex.Tokens = append(lex.Tokens, Token{Equal, "="})
 			case '+':
-				lex.Input.ChopOff(1)
+				source.ChopOff(1)
 				lex.Tokens = append(lex.Tokens, Token{Plus, "+"})
 			default:
-				log.Fatalf("Unknown token %q", lex.Input.First())
+				lex.Reporter.Fail(len(lex.Input.Value)-len(source.Value), "Unexpected character '", string(source.First()), "'")
 			}
 		}
-		lex.Input.TrimSpaceAndNewLine()
+		source.TrimSpaceAndNewLine()
 	}
 }
 

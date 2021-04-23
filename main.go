@@ -16,7 +16,12 @@ func main() {
 		log.Fatalf("Error opening file %s", filePath)
 	}
 
-	lexer := sowo.Lexer{Input: sowo.Input(string(content))}
+	reporter := sowo.Reporter{
+		Input:    string(content),
+		FileName: filePath}
+	lexer := sowo.Lexer{
+		Input:    sowo.Input(string(content)),
+		Reporter: reporter}
 	lexer.Tokenize()
 	//lexer.DumpTokens()
 
