@@ -9,21 +9,27 @@ import (
 	sowo "github.com/Supercaly/sowo/src"
 )
 
-func main() {
-	filePath := os.Args[1]
+func readFileAsString(filePath string) string {
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		log.Fatalf("Error opening file %s", filePath)
 	}
+	return string(content)
+}
+
+func main() {
+	filePath := os.Args[1]
+	inputFile := readFileAsString(filePath)
 
 	reporter := sowo.Reporter{
-		Input:    string(content),
+		Input:    inputFile,
 		FileName: filePath}
 	lexer := sowo.Lexer{
-		Input:    sowo.Input(string(content)),
+		Input:    sowo.Input(inputFile),
 		Reporter: reporter}
 	lexer.Tokenize()
-	//lexer.DumpTokens()
+	lexer.DumpTokens()
+	fmt.Println()
 
 	parser := sowo.Parser{Tokens: lexer.Tokens}
 	module := parser.ParseModule()

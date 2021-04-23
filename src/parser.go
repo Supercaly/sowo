@@ -1,6 +1,7 @@
 package src
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 )
@@ -57,6 +58,49 @@ type Module struct {
 // parse a list of tokens into a Module.
 type Parser struct {
 	Tokens []Token
+}
+
+func (t Type) String() (ret string) {
+	switch t {
+	case Integer:
+		ret = "Integer"
+	}
+	return ret
+}
+func (k StatementKind) String() (ret string) {
+	switch k {
+	case LocVarDef:
+		ret = "LocVarDef"
+	}
+	return ret
+}
+
+func (vd VarDef) String() string {
+	return fmt.Sprintf("VarDef{Name: %s, Type: %s}", vd.Name, vd.Type)
+}
+
+func (lvd LocalVarDef) String() string {
+	return fmt.Sprintf("LocalVarDef{VarDef: %s, Value: %s}", lvd.VarDef, lvd.Value)
+}
+
+func (e Expression) String() string {
+	return fmt.Sprintf("Expression{Type: %s, NumberLiteral: %d}", e.Type, e.NumberLiteral)
+}
+
+func (s Statement) String() string {
+	return fmt.Sprintf("Statement{Kind: %s, Type: %s, LocalVarDef: %s}", s.Kind, s.Type, s.LocalVarDef)
+}
+
+func (b Block) String() string {
+	return fmt.Sprintf("Block{Block: %s}", b.Statement)
+}
+
+func (fd FuncDef) String() string {
+	return fmt.Sprintf("FuncDef{Name: %s, Args: %s, ReturnType: %s, Block: %s}", fd.Name, fd.Args, fd.ReturnType, fd.Body)
+}
+
+func (m Module) String() string {
+	return fmt.Sprintf("Module{FuncDefs: %s}", m.FuncDefs)
 }
 
 func (p Parser) expectTokenType(expected TokenType) {
