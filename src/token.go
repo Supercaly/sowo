@@ -4,8 +4,11 @@ import (
 	"fmt"
 )
 
+// Represent a single Token.
 type Token struct {
+	// Type of the token.
 	Type TokenType
+	// Value of the token.
 	Text string
 }
 
@@ -13,6 +16,7 @@ func (t Token) String() string {
 	return fmt.Sprintf("{Type: %s, Text: '%s'}", t.Type, t.Text)
 }
 
+// Represent all the possible token types.
 type TokenType int
 
 const (
@@ -31,34 +35,34 @@ const (
 	NumberConst
 )
 
-func (tt TokenType) String() (s string) {
+func (tt TokenType) String() (ret string) {
 	switch tt {
 	case Func:
-		s = "Func"
+		ret = "Func"
 	case Symbol:
-		s = "Symbol"
+		ret = "Symbol"
 	case OpenParen:
-		s = "OpenParen"
+		ret = "OpenParen"
 	case CloseParen:
-		s = "CloseParen"
+		ret = "CloseParen"
 	case OpenCurly:
-		s = "OpenCurly"
+		ret = "OpenCurly"
 	case CloseCurly:
-		s = "CloseCurly"
+		ret = "CloseCurly"
 	case Var:
-		s = "Var"
+		ret = "Var"
 	case Colon:
-		s = "Colon"
+		ret = "Colon"
 	case Comma:
-		s = "Comma"
+		ret = "Comma"
 	case Equal:
-		s = "Equal"
+		ret = "Equal"
 	case Semicolon:
-		s = "Semicolon"
+		ret = "Semicolon"
 	case Plus:
-		s = "Plus"
+		ret = "Plus"
 	case NumberConst:
-		s = "NumberConst"
+		ret = "NumberConst"
 	}
-	return s
+	return ret
 }

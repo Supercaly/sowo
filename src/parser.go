@@ -28,8 +28,8 @@ type LocalVarDef struct {
 }
 
 type Expression struct {
-	Type           Type
-	NumberLitteral int
+	Type          Type
+	NumberLiteral int
 }
 
 type Statement struct {
@@ -49,22 +49,12 @@ type FuncDef struct {
 	Body       Block
 }
 
-// func (fd FuncDef) String() (ret string) {
-// 	ret = fd.Name
-// 	return ret
-// }
-
 type Module struct {
 	FuncDefs []FuncDef
 }
 
-// func (m Module) String() (ret string) {
-// 	for _, f := range m.FuncDefs {
-// 		ret = ret + f.String()
-// 	}
-// 	return ret
-// }
-
+// Represent a parser with methods to
+// parse a list of tokens into a Module.
 type Parser struct {
 	Tokens []Token
 }
@@ -117,7 +107,7 @@ func (p *Parser) parseLocalVarDef() (vd LocalVarDef) {
 func (p *Parser) parseExpression() (exp Expression) {
 	p.expectTokenType(NumberConst)
 	exp.Type = Integer
-	exp.NumberLitteral, _ = strconv.Atoi(p.Tokens[0].Text)
+	exp.NumberLiteral, _ = strconv.Atoi(p.Tokens[0].Text)
 	p.Tokens = p.Tokens[1:]
 	return exp
 }
@@ -183,6 +173,7 @@ func (p *Parser) parseFuncDef() (fd FuncDef) {
 	return fd
 }
 
+// Parse a list of tokens into a Module.
 func (p *Parser) ParseModule() (mod Module) {
 	for len(p.Tokens) > 0 {
 		mod.FuncDefs = append(mod.FuncDefs, p.parseFuncDef())

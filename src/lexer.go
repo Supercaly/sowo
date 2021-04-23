@@ -6,18 +6,15 @@ import (
 	"unicode"
 )
 
+// Struct representing a lexer.
 type Lexer struct {
-	Input  InputStr
+	// The program string in input.
+	Input InputStr
+	// List of tokens.
 	Tokens []Token
 }
 
-func (l Lexer) String() (s string) {
-	for _, token := range l.Tokens {
-		s = s + token.String()
-	}
-	return s
-}
-
+// Converts the program string in input to a list of tokens
 func (lex *Lexer) Tokenize() {
 	lex.Input.TrimSpaceAndNewLine()
 
@@ -70,6 +67,7 @@ func (lex *Lexer) Tokenize() {
 	}
 }
 
+// Print all the tokens
 func (lex Lexer) DumpTokens() {
 	for _, token := range lex.Tokens {
 		fmt.Printf("%s -> \"%s\"\n", token.Type, token.Text)
