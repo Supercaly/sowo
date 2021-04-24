@@ -37,6 +37,10 @@ func (r Reporter) print(offset int, level string, args ...interface{}) {
 	fmt.Print("\n")
 }
 
+func (r Reporter) OffsetFromInput(currentPosition string) int {
+	return strings.Index(r.Input, currentPosition)
+}
+
 func (r Reporter) offsetToLocation(offset int) Location {
 	lines := strings.Split(strings.ReplaceAll(r.Input, "\r\n", "\n"), "\n")
 

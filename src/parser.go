@@ -141,98 +141,98 @@ func (m Module) String() string {
 // type from the current parsed token
 func (p Parser) expectTokenType(expected TokenType) {
 	if len(p.Tokens) == 0 || expected != p.Tokens[0].Type {
-		p.Reporter.Fail(0, "Expected '", expected, "' but got '", p.Tokens[0].Type, "'")
+		p.Reporter.Fail(p.Reporter.OffsetFromInput(p.Tokens[0].Text), "Expected '", expected, "' but got '", p.Tokens[0].Type, "'")
 	}
 }
 
 // Parses the tokens into an expression.
-func (p *Parser) parseExpression() (exp Expression) {
+func (p *Parser) parseExpression() (result Expression) {
 	p.expectTokenType(NumberConst)
-	exp.Type = Integer
-	exp.NumberLiteral, _ = strconv.Atoi(p.Tokens[0].Text)
+	result.Type = Integer
+	result.NumberLiteral, _ = strconv.Atoi(p.Tokens[0].Text)
 	p.Tokens = p.Tokens[1:]
-	return exp
+	return result
 }
 
 // Parses the tokens into a type annotation.
-func (p *Parser) parseTypeAnnotation() (t TypeAnnotation) {
+func (p *Parser) parseTypeAnnotation() (result TypeAnnotation) {
 	p.expectTokenType(Colon)
 	p.Tokens = p.Tokens[1:]
 
 	p.expectTokenType(Symbol)
 	switch p.Tokens[0].Text {
 	case "void":
-		t = Void
+		result = Void
 		p.Tokens = p.Tokens[1:]
 	case "int":
-		t = Integer
+		result = Integer
 		p.Tokens = p.Tokens[1:]
 	default:
-		p.Reporter.Fail(0, "Unknown type '", p.Tokens[0].Text, "'")
+		p.Reporter.Fail(p.Reporter.OffsetFromInput(p.Tokens[0].Text), "Unknown type '", p.Tokens[0].Text, "'")
 	}
-	return t
+	return result
 }
 
 // Parses the tokens into a variable definition.
-func (p *Parser) parseVarDef() (vd VarDef) {
+func (p *Parser) parseVarDef() (result VarDef) {
 	p.expectTokenType(Symbol)
-	vd.Name = p.Tokens[0].Text
+	result.Name = p.Tokens[0].Text
 	p.Tokens = p.Tokens[1:]
-	vd.Type = p.parseTypeAnnotation()
-	return vd
+	result.Type = p.parseTypeAnnotation()
+	return result
 }
 
 // Parses the tokens into a local variable definition.
-func (p *Parser) parseLocalVarDef() (vd LocalVarDef) {
+func (p *Parser) parseLocalVarDef() (result LocalVarDef) {
 	p.expectTokenType(Var)
 	p.Tokens = p.Tokens[1:]
 
-	vd.VariableDef = p.parseVarDef()
+	result.VariableDef = p.parseVarDef()
 
 	// TODO: The value assignment could be skipped
 	// In some cases i would want something like `var a: int;`
 	p.expectTokenType(Equal)
 	p.Tokens = p.Tokens[1:]
 
-	vd.Value = p.parseExpression()
+	result.Value = p.parseExpression()
 
 	p.expectTokenType(Semicolon)
 	p.Tokens = p.Tokens[1:]
-	return vd
+	return result
 }
 
 // Parses the tokens into a statement.
-func (p *Parser) parseStatement() (s Statement) {
+func (p *Parser) parseStatement() (result Statement) {
 	switch p.Tokens[0].Type {
 	case Var:
-		s.Kind = LocVarDef
-		s.LocalVarDef = p.parseLocalVarDef()
+		result.Kind = LocVarDef
+		result.LocalVarDef = p.parseLocalVarDef()
 	}
 	// TODO: Add more statements types like if/for/assignments
-	return s
+	return result
 }
 
 // Parses the tokens into a block.
-func (p *Parser) parseBlock() (b Block) {
+func (p *Parser) parseBlock() (result Block) {
 	p.expectTokenType(OpenCurly)
 	p.Tokens = p.Tokens[1:]
 
 	for len(p.Tokens) > 0 && p.Tokens[0].Type != CloseCurly {
-		b.Statement = append(b.Statement, p.parseStatement())
+		result.Statement = append(result.Statement, p.parseStatement())
 	}
 
 	p.expectTokenType(CloseCurly)
 	p.Tokens = p.Tokens[1:]
-	return b
+	return result
 }
 
 // Parses the tokens into a function's arguments list.
-func (p *Parser) parseFuncArgs() (args []VarDef) {
+func (p *Parser) parseFuncArgs() (result []VarDef) {
 	p.expectTokenType(OpenParen)
 	p.Tokens = p.Tokens[1:]
 
 	for len(p.Tokens) > 0 && p.Tokens[0].Type != CloseParen {
-		args = append(args, p.parseVarDef())
+		result = append(result, p.parseVarDef())
 
 		if p.Tokens[0].Type != Comma {
 			break
@@ -244,39 +244,39 @@ func (p *Parser) parseFuncArgs() (args []VarDef) {
 	p.expectTokenType(CloseParen)
 	p.Tokens = p.Tokens[1:]
 
-	return args
+	return result
 }
 
 // Parses the tokens into a function's return type.
-func (p *Parser) parseFuncReturnType() (ret TypeAnnotation) {
-	ret = Void
+func (p *Parser) parseFuncReturnType() (result TypeAnnotation) {
+	result = Void
 	if p.Tokens[0].Type == Colon {
 		p.Tokens = p.Tokens[1:]
-		ret = p.parseTypeAnnotation()
+		result = p.parseTypeAnnotation()
 	}
-	return ret
+	return result
 }
 
 // Parses the tokens into a function definition.
-func (p *Parser) parseFuncDef() (fd FuncDef) {
+func (p *Parser) parseFuncDef() (result FuncDef) {
 	p.expectTokenType(Func)
 	p.Tokens = p.Tokens[1:]
 
 	p.expectTokenType(Symbol)
-	fd.Name = p.Tokens[0].Text
+	result.Name = p.Tokens[0].Text
 	p.Tokens = p.Tokens[1:]
 
-	fd.Args = p.parseFuncArgs()
-	fd.ReturnType = p.parseFuncReturnType()
-	fd.Body = p.parseBlock()
+	result.Args = p.parseFuncArgs()
+	result.ReturnType = p.parseFuncReturnType()
+	result.Body = p.parseBlock()
 
-	return fd
+	return result
 }
 
 // Parse a list of tokens into a Module.
-func (p *Parser) ParseModule() (mod Module) {
+func (p *Parser) ParseModule() (result Module) {
 	for len(p.Tokens) > 0 {
-		mod.FuncDefinitions = append(mod.FuncDefinitions, p.parseFuncDef())
+		result.FuncDefinitions = append(result.FuncDefinitions, p.parseFuncDef())
 	}
-	return mod
+	return result
 }
