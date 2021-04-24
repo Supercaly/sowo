@@ -33,6 +33,7 @@ const (
 	Semicolon
 	Plus
 	NumberConst
+	Hash
 )
 
 func (tt TokenType) String() (ret string) {
@@ -63,6 +64,8 @@ func (tt TokenType) String() (ret string) {
 		ret = "Plus"
 	case NumberConst:
 		ret = "NumberConst"
+	case Hash:
+		ret = "Hash"
 	}
 	return ret
 }

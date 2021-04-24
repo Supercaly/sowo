@@ -55,6 +55,9 @@ func (lex *Lexer) Tokenize() {
 				lex.Tokens = append(lex.Tokens, Token{Equal, source.ChopOff(1)})
 			case '+':
 				lex.Tokens = append(lex.Tokens, Token{Plus, source.ChopOff(1)})
+			case '#':
+				source.ChopOff(1)
+				source.ChopWhile(func(r rune) bool { return !isLineBreak(r) })
 			default:
 				lex.Reporter.Fail(len(lex.Input.Value)-len(source.Value), "Unexpected character '", string(source.First()), "'")
 			}
@@ -80,4 +83,8 @@ func isSymbol(s rune) bool {
 
 func isNumber(s rune) bool {
 	return unicode.IsNumber(s)
+}
+
+func isLineBreak(s rune) bool {
+	return s == '\r' || s == '\n'
 }
