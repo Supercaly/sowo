@@ -31,7 +31,7 @@ func main() {
 	lexer.DumpTokens()
 	fmt.Println()
 
-	parser := sowo.Parser{Tokens: lexer.Tokens}
+	parser := sowo.Parser{Tokens: lexer.Tokens, Reporter: reporter}
 	module := parser.ParseModule()
 	fmt.Println(module)
 }

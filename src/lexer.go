@@ -38,29 +38,23 @@ func (lex *Lexer) Tokenize() {
 		} else {
 			switch source.First() {
 			case '(':
-				source.ChopOff(1)
-				lex.Tokens = append(lex.Tokens, Token{OpenParen, "("})
+				lex.Tokens = append(lex.Tokens, Token{OpenParen, source.ChopOff(1)})
 			case ')':
-				source.ChopOff(1)
-				lex.Tokens = append(lex.Tokens, Token{CloseParen, ")"})
+				lex.Tokens = append(lex.Tokens, Token{CloseParen, source.ChopOff(1)})
 			case '{':
-				source.ChopOff(1)
-				lex.Tokens = append(lex.Tokens, Token{OpenCurly, "{"})
+				lex.Tokens = append(lex.Tokens, Token{OpenCurly, source.ChopOff(1)})
 			case '}':
-				source.ChopOff(1)
-				lex.Tokens = append(lex.Tokens, Token{CloseCurly, "}"})
+				lex.Tokens = append(lex.Tokens, Token{CloseCurly, source.ChopOff(1)})
 			case ':':
-				source.ChopOff(1)
-				lex.Tokens = append(lex.Tokens, Token{Colon, ":"})
+				lex.Tokens = append(lex.Tokens, Token{Colon, source.ChopOff(1)})
+			case ',':
+				lex.Tokens = append(lex.Tokens, Token{Comma, source.ChopOff(1)})
 			case ';':
-				source.ChopOff(1)
-				lex.Tokens = append(lex.Tokens, Token{Semicolon, ";"})
+				lex.Tokens = append(lex.Tokens, Token{Semicolon, source.ChopOff(1)})
 			case '=':
-				source.ChopOff(1)
-				lex.Tokens = append(lex.Tokens, Token{Equal, "="})
+				lex.Tokens = append(lex.Tokens, Token{Equal, source.ChopOff(1)})
 			case '+':
-				source.ChopOff(1)
-				lex.Tokens = append(lex.Tokens, Token{Plus, "+"})
+				lex.Tokens = append(lex.Tokens, Token{Plus, source.ChopOff(1)})
 			default:
 				lex.Reporter.Fail(len(lex.Input.Value)-len(source.Value), "Unexpected character '", string(source.First()), "'")
 			}
