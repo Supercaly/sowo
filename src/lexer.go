@@ -22,40 +22,43 @@ func (lex *Lexer) Tokenize() {
 
 	for !source.IsEmpty() {
 		if isSymbolStart(source.First()) {
+			// Tokenize a valid symbol
 			textSymbol := source.ChopWhile(isSymbol)
 
 			switch textSymbol {
 			case "fun":
-				lex.Tokens = append(lex.Tokens, Token{Func, textSymbol})
+				lex.Tokens = append(lex.Tokens, Token{TokenFunc, textSymbol})
 			case "var":
-				lex.Tokens = append(lex.Tokens, Token{Var, textSymbol})
+				lex.Tokens = append(lex.Tokens, Token{TokenVar, textSymbol})
 			default:
-				lex.Tokens = append(lex.Tokens, Token{Symbol, textSymbol})
+				lex.Tokens = append(lex.Tokens, Token{TokenSymbol, textSymbol})
 			}
 		} else if unicode.IsNumber(source.First()) {
+			// Tokenize a number literal
 			numberSymbol := source.ChopWhile(isNumber)
-			lex.Tokens = append(lex.Tokens, Token{NumberConst, numberSymbol})
+			lex.Tokens = append(lex.Tokens, Token{TokenNumberConst, numberSymbol})
 		} else {
 			switch source.First() {
 			case '(':
-				lex.Tokens = append(lex.Tokens, Token{OpenParen, source.ChopOff(1)})
+				lex.Tokens = append(lex.Tokens, Token{TokenOpenParen, source.ChopOff(1)})
 			case ')':
-				lex.Tokens = append(lex.Tokens, Token{CloseParen, source.ChopOff(1)})
+				lex.Tokens = append(lex.Tokens, Token{TokenCloseParen, source.ChopOff(1)})
 			case '{':
-				lex.Tokens = append(lex.Tokens, Token{OpenCurly, source.ChopOff(1)})
+				lex.Tokens = append(lex.Tokens, Token{TokenOpenCurly, source.ChopOff(1)})
 			case '}':
-				lex.Tokens = append(lex.Tokens, Token{CloseCurly, source.ChopOff(1)})
+				lex.Tokens = append(lex.Tokens, Token{TokenCloseCurly, source.ChopOff(1)})
 			case ':':
-				lex.Tokens = append(lex.Tokens, Token{Colon, source.ChopOff(1)})
+				lex.Tokens = append(lex.Tokens, Token{TokenColon, source.ChopOff(1)})
 			case ',':
-				lex.Tokens = append(lex.Tokens, Token{Comma, source.ChopOff(1)})
+				lex.Tokens = append(lex.Tokens, Token{TokenComma, source.ChopOff(1)})
 			case ';':
-				lex.Tokens = append(lex.Tokens, Token{Semicolon, source.ChopOff(1)})
+				lex.Tokens = append(lex.Tokens, Token{TokenSemicolon, source.ChopOff(1)})
 			case '=':
-				lex.Tokens = append(lex.Tokens, Token{Equal, source.ChopOff(1)})
+				lex.Tokens = append(lex.Tokens, Token{TokenEqual, source.ChopOff(1)})
 			case '+':
-				lex.Tokens = append(lex.Tokens, Token{Plus, source.ChopOff(1)})
+				lex.Tokens = append(lex.Tokens, Token{TokenPlus, source.ChopOff(1)})
 			case '#':
+				// The comments are dumped since are not needed in next steps
 				source.ChopOff(1)
 				source.ChopWhile(func(r rune) bool { return !isLineBreak(r) })
 			default:
@@ -69,7 +72,7 @@ func (lex *Lexer) Tokenize() {
 // Print all the tokens
 func (lex Lexer) DumpTokens() {
 	for _, token := range lex.Tokens {
-		fmt.Printf("%s -> \"%s\"\n", token.Type, token.Text)
+		fmt.Printf("%s -> \"%s\"\n", token.Type, token.Value)
 	}
 }
 

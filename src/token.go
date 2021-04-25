@@ -2,6 +2,7 @@ package src
 
 import (
 	"fmt"
+	"log"
 )
 
 // Represent a single Token.
@@ -9,63 +10,65 @@ type Token struct {
 	// Type of the token.
 	Type TokenType
 	// Value of the token.
-	Text string
+	Value string
 }
 
 func (t Token) String() string {
-	return fmt.Sprintf("{Type: %s, Text: '%s'}", t.Type, t.Text)
+	return fmt.Sprintf("{Type: %s, Text: '%s'}", t.Type, t.Value)
 }
 
 // Represent all the possible token types.
 type TokenType int
 
 const (
-	Func TokenType = iota
-	Symbol
-	OpenParen
-	CloseParen
-	OpenCurly
-	CloseCurly
-	Var
-	Colon
-	Comma
-	Equal
-	Semicolon
-	Plus
-	NumberConst
-	Hash
+	TokenFunc TokenType = iota
+	TokenSymbol
+	TokenOpenParen
+	TokenCloseParen
+	TokenOpenCurly
+	TokenCloseCurly
+	TokenVar
+	TokenColon
+	TokenComma
+	TokenEqual
+	TokenSemicolon
+	TokenPlus
+	TokenNumberConst
+	TokenHash
 )
 
 func (tt TokenType) String() (ret string) {
 	switch tt {
-	case Func:
+	case TokenFunc:
 		ret = "Func"
-	case Symbol:
+	case TokenSymbol:
 		ret = "Symbol"
-	case OpenParen:
+	case TokenOpenParen:
 		ret = "OpenParen"
-	case CloseParen:
+	case TokenCloseParen:
 		ret = "CloseParen"
-	case OpenCurly:
+	case TokenOpenCurly:
 		ret = "OpenCurly"
-	case CloseCurly:
+	case TokenCloseCurly:
 		ret = "CloseCurly"
-	case Var:
+	case TokenVar:
 		ret = "Var"
-	case Colon:
+	case TokenColon:
 		ret = "Colon"
-	case Comma:
+	case TokenComma:
 		ret = "Comma"
-	case Equal:
+	case TokenEqual:
 		ret = "Equal"
-	case Semicolon:
+	case TokenSemicolon:
 		ret = "Semicolon"
-	case Plus:
+	case TokenPlus:
 		ret = "Plus"
-	case NumberConst:
+	case TokenNumberConst:
 		ret = "NumberConst"
-	case Hash:
+	case TokenHash:
 		ret = "Hash"
+	default:
+		log.Fatalf("Unexpected token type %d", tt)
 	}
 	return ret
 }

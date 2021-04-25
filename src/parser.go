@@ -34,6 +34,11 @@ type LocalVarDef struct {
 	Value Expression
 }
 
+type Assignment struct {
+	VarName string
+	Value   Expression
+}
+
 // Represents an expression.
 type Expression struct {
 	// Type of the expression.
@@ -46,6 +51,7 @@ type Statement struct {
 	Kind        StatementKind
 	Type        TypeAnnotation
 	LocalVarDef LocalVarDef
+	Assignment  Assignment
 }
 
 // Represents the type of the statement.
@@ -55,6 +61,7 @@ type StatementKind int
 
 const (
 	LocVarDef StatementKind = iota
+	Assign
 )
 
 // Represents a block of code.
@@ -101,10 +108,13 @@ func (t TypeAnnotation) String() (ret string) {
 	}
 	return ret
 }
+
 func (k StatementKind) String() (ret string) {
 	switch k {
 	case LocVarDef:
 		ret = "LocVarDef"
+	case Assign:
+		ret = "Assign"
 	}
 	return ret
 }
@@ -122,7 +132,7 @@ func (e Expression) String() string {
 }
 
 func (s Statement) String() string {
-	return fmt.Sprintf("Statement{Kind: %s, Type: %s, LocalVarDef: %s}", s.Kind, s.Type, s.LocalVarDef)
+	return fmt.Sprintf("Statement{Kind: %s, Type: %s, LocalVarDef: %s, Assignment: %s}", s.Kind, s.Type, s.LocalVarDef, s.Assignment)
 }
 
 func (b Block) String() string {
@@ -137,30 +147,34 @@ func (m Module) String() string {
 	return fmt.Sprintf("Module{FuncDefs: %s}", m.FuncDefinitions)
 }
 
+func (p Parser) currentLocation() int {
+	return p.Reporter.OffsetFromInput(p.Tokens[0].Value)
+}
+
 // This method will fail if the expected token has a different
 // type from the current parsed token
 func (p Parser) expectTokenType(expected TokenType) {
 	if len(p.Tokens) == 0 || expected != p.Tokens[0].Type {
-		p.Reporter.Fail(p.Reporter.OffsetFromInput(p.Tokens[0].Text), "Expected '", expected, "' but got '", p.Tokens[0].Type, "'")
+		p.Reporter.Fail(p.currentLocation(), "Expected '", expected, "' but got '", p.Tokens[0].Type, "'")
 	}
 }
 
 // Parses the tokens into an expression.
 func (p *Parser) parseExpression() (result Expression) {
-	p.expectTokenType(NumberConst)
+	p.expectTokenType(TokenNumberConst)
 	result.Type = Integer
-	result.NumberLiteral, _ = strconv.Atoi(p.Tokens[0].Text)
+	result.NumberLiteral, _ = strconv.Atoi(p.Tokens[0].Value)
 	p.Tokens = p.Tokens[1:]
 	return result
 }
 
 // Parses the tokens into a type annotation.
 func (p *Parser) parseTypeAnnotation() (result TypeAnnotation) {
-	p.expectTokenType(Colon)
+	p.expectTokenType(TokenColon)
 	p.Tokens = p.Tokens[1:]
 
-	p.expectTokenType(Symbol)
-	switch p.Tokens[0].Text {
+	p.expectTokenType(TokenSymbol)
+	switch p.Tokens[0].Value {
 	case "void":
 		result = Void
 		p.Tokens = p.Tokens[1:]
@@ -168,15 +182,15 @@ func (p *Parser) parseTypeAnnotation() (result TypeAnnotation) {
 		result = Integer
 		p.Tokens = p.Tokens[1:]
 	default:
-		p.Reporter.Fail(p.Reporter.OffsetFromInput(p.Tokens[0].Text), "Unknown type '", p.Tokens[0].Text, "'")
+		p.Reporter.Fail(p.currentLocation(), "Unknown type '", p.Tokens[0].Value, "'")
 	}
 	return result
 }
 
 // Parses the tokens into a variable definition.
 func (p *Parser) parseVarDef() (result VarDef) {
-	p.expectTokenType(Symbol)
-	result.Name = p.Tokens[0].Text
+	p.expectTokenType(TokenSymbol)
+	result.Name = p.Tokens[0].Value
 	p.Tokens = p.Tokens[1:]
 	result.Type = p.parseTypeAnnotation()
 	return result
@@ -184,29 +198,56 @@ func (p *Parser) parseVarDef() (result VarDef) {
 
 // Parses the tokens into a local variable definition.
 func (p *Parser) parseLocalVarDef() (result LocalVarDef) {
-	p.expectTokenType(Var)
+	p.expectTokenType(TokenVar)
 	p.Tokens = p.Tokens[1:]
 
 	result.VariableDef = p.parseVarDef()
 
 	// TODO: The value assignment could be skipped
 	// In some cases i would want something like `var a: int;`
-	p.expectTokenType(Equal)
+	p.expectTokenType(TokenEqual)
 	p.Tokens = p.Tokens[1:]
 
 	result.Value = p.parseExpression()
 
-	p.expectTokenType(Semicolon)
+	p.expectTokenType(TokenSemicolon)
 	p.Tokens = p.Tokens[1:]
+	return result
+}
+
+func (p *Parser) parseAssignment() (result Assignment) {
+	p.expectTokenType(TokenSymbol)
+	result.VarName = p.Tokens[0].Value
+	p.Tokens = p.Tokens[1:]
+
+	p.expectTokenType(TokenEqual)
+	p.Tokens = p.Tokens[1:]
+
+	result.Value = p.parseExpression()
+
+	p.expectTokenType(TokenSemicolon)
+	p.Tokens = p.Tokens[1:]
+
 	return result
 }
 
 // Parses the tokens into a statement.
 func (p *Parser) parseStatement() (result Statement) {
 	switch p.Tokens[0].Type {
-	case Var:
+	case TokenVar:
 		result.Kind = LocVarDef
 		result.LocalVarDef = p.parseLocalVarDef()
+	case TokenSymbol:
+		if len(p.Tokens) <= 1 {
+			panic("more tokens are needed to parse a symbol a statement")
+		}
+		switch p.Tokens[1].Type {
+		case TokenEqual:
+			result.Kind = Assign
+			result.Assignment = p.parseAssignment()
+		default:
+
+		}
 	}
 	// TODO: Add more statements types like if/for/assignments
 	return result
@@ -214,34 +255,34 @@ func (p *Parser) parseStatement() (result Statement) {
 
 // Parses the tokens into a block.
 func (p *Parser) parseBlock() (result Block) {
-	p.expectTokenType(OpenCurly)
+	p.expectTokenType(TokenOpenCurly)
 	p.Tokens = p.Tokens[1:]
 
-	for len(p.Tokens) > 0 && p.Tokens[0].Type != CloseCurly {
+	for len(p.Tokens) > 0 && p.Tokens[0].Type != TokenCloseCurly {
 		result.Statement = append(result.Statement, p.parseStatement())
 	}
 
-	p.expectTokenType(CloseCurly)
+	p.expectTokenType(TokenCloseCurly)
 	p.Tokens = p.Tokens[1:]
 	return result
 }
 
 // Parses the tokens into a function's arguments list.
 func (p *Parser) parseFuncArgs() (result []VarDef) {
-	p.expectTokenType(OpenParen)
+	p.expectTokenType(TokenOpenParen)
 	p.Tokens = p.Tokens[1:]
 
-	for len(p.Tokens) > 0 && p.Tokens[0].Type != CloseParen {
+	for len(p.Tokens) > 0 && p.Tokens[0].Type != TokenCloseParen {
 		result = append(result, p.parseVarDef())
 
-		if p.Tokens[0].Type != Comma {
+		if p.Tokens[0].Type != TokenComma {
 			break
 		}
 
 		p.Tokens = p.Tokens[1:]
 	}
 
-	p.expectTokenType(CloseParen)
+	p.expectTokenType(TokenCloseParen)
 	p.Tokens = p.Tokens[1:]
 
 	return result
@@ -250,7 +291,7 @@ func (p *Parser) parseFuncArgs() (result []VarDef) {
 // Parses the tokens into a function's return type.
 func (p *Parser) parseFuncReturnType() (result TypeAnnotation) {
 	result = Void
-	if p.Tokens[0].Type == Colon {
+	if p.Tokens[0].Type == TokenColon {
 		p.Tokens = p.Tokens[1:]
 		result = p.parseTypeAnnotation()
 	}
@@ -259,11 +300,11 @@ func (p *Parser) parseFuncReturnType() (result TypeAnnotation) {
 
 // Parses the tokens into a function definition.
 func (p *Parser) parseFuncDef() (result FuncDef) {
-	p.expectTokenType(Func)
+	p.expectTokenType(TokenFunc)
 	p.Tokens = p.Tokens[1:]
 
-	p.expectTokenType(Symbol)
-	result.Name = p.Tokens[0].Text
+	p.expectTokenType(TokenSymbol)
+	result.Name = p.Tokens[0].Value
 	p.Tokens = p.Tokens[1:]
 
 	result.Args = p.parseFuncArgs()
