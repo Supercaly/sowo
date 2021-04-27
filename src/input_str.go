@@ -5,18 +5,13 @@ import "strings"
 // Represent an input string with methods to
 // mange its content.
 type InputStr struct {
-	Value string
-}
-
-// Creates a new InputStr from a string.
-func Input(s string) InputStr {
-	return InputStr{s}
+	value string
 }
 
 // Trims all leadind white spaces and new line.
 // This works for either CRLF and LF.
 func (is *InputStr) TrimSpaceAndNewLine() {
-	is.Value = strings.TrimLeftFunc(is.Value, func(r rune) bool {
+	is.value = strings.TrimLeftFunc(is.value, func(r rune) bool {
 		return r == ' ' || r == '\r' || r == '\n'
 	})
 }
@@ -26,7 +21,7 @@ func (is *InputStr) TrimSpaceAndNewLine() {
 // The chopped characters are returned as a string.
 func (is *InputStr) ChopWhile(predicate func(rune) bool) string {
 	var n int
-	for n < len(is.Value) && predicate(rune(is.Value[n])) {
+	for n < len(is.value) && predicate(rune(is.value[n])) {
 		n++
 	}
 	return is.ChopOff(n)
@@ -35,17 +30,17 @@ func (is *InputStr) ChopWhile(predicate func(rune) bool) string {
 // Chops the first n characters from the start of the input
 // and returns them as a string.
 func (is *InputStr) ChopOff(n int) (ret string) {
-	ret = is.Value[:n]
-	is.Value = is.Value[n:]
+	ret = is.value[:n]
+	is.value = is.value[n:]
 	return ret
 }
 
 // Returns true if the input string is empty.
 func (is InputStr) IsEmpty() bool {
-	return len(is.Value) == 0
+	return len(is.value) == 0
 }
 
 // Returns the first character of the input as a rune.
 func (is InputStr) First() rune {
-	return rune(is.Value[0])
+	return rune(is.value[0])
 }

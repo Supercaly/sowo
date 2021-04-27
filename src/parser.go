@@ -51,6 +51,14 @@ type Parser struct {
 	Reporter Reporter
 }
 
+// Factory that returns a new Parser.
+func NewParser(tokens []Token, reporter Reporter) Parser {
+	return Parser{
+		Tokens:   tokens,
+		Reporter: reporter,
+	}
+}
+
 func (t TypeAnnotation) String() (ret string) {
 	switch t {
 	case TypeVoid:

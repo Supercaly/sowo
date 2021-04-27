@@ -13,6 +13,13 @@ type Reporter struct {
 	FileName string
 }
 
+// Factory that returns a new Reporter.
+func NewReporter(input string, fileName string) Reporter {
+	return Reporter{
+		Input:    input,
+		FileName: fileName}
+}
+
 // Represent the location of the report inside the file
 // by his row and column.
 type Location struct {

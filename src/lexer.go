@@ -15,6 +15,14 @@ type Lexer struct {
 	Reporter Reporter
 }
 
+// Factory that returns a new Lexer.
+func NewLexer(input string, reporter Reporter) Lexer {
+	return Lexer{
+		Input:    InputStr{input},
+		Reporter: reporter,
+	}
+}
+
 // Converts the program string in input to a list of tokens
 func (lex *Lexer) Tokenize() {
 	source := lex.Input
@@ -62,7 +70,7 @@ func (lex *Lexer) Tokenize() {
 				source.ChopOff(1)
 				source.ChopWhile(func(r rune) bool { return !isLineBreak(r) })
 			default:
-				lex.Reporter.Fail(len(lex.Input.Value)-len(source.Value), "Unexpected character '", string(source.First()), "'")
+				lex.Reporter.Fail(len(lex.Input.value)-len(source.value), "Unexpected character '", string(source.First()), "'")
 			}
 		}
 		source.TrimSpaceAndNewLine()

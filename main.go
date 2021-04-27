@@ -23,15 +23,11 @@ func main() {
 	// Read the input file
 	inputFile := readFileAsString(options.InputFile)
 
-	reporter := sowo.Reporter{
-		Input:    inputFile,
-		FileName: options.InputFile}
+	reporter := sowo.NewReporter(inputFile, options.InputFile)
 
 	// Start the compilation process:
 	// Tokenize the file
-	lexer := sowo.Lexer{
-		Input:    sowo.Input(inputFile),
-		Reporter: reporter}
+	lexer := sowo.NewLexer(inputFile, reporter)
 	lexer.Tokenize()
 	if options.PrintTokens {
 		lexer.DumpTokens()
@@ -39,7 +35,7 @@ func main() {
 	}
 
 	// Parse the tokens
-	parser := sowo.Parser{Tokens: lexer.Tokens, Reporter: reporter}
+	parser := sowo.NewParser(lexer.Tokens, reporter)
 	ast := parser.ParseModule()
 	if options.PrintAst {
 		sowo.DumpAst(ast, 0)
