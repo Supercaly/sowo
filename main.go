@@ -18,11 +18,10 @@ func readFileAsString(filePath string) string {
 }
 
 func main() {
-	options := sowo.OptionsFromCommandLine()
+	options := optionsFromCommandLine()
 
 	// Read the input file
 	inputFile := readFileAsString(options.InputFile)
-
 	reporter := sowo.NewReporter(inputFile, options.InputFile)
 
 	// Start the compilation process:

@@ -1,4 +1,4 @@
-package src
+package main
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ type CompilerOptions struct {
 }
 
 // Creates new CompilerOptions from command line arguments.
-func OptionsFromCommandLine() CompilerOptions {
+func optionsFromCommandLine() CompilerOptions {
 	args := os.Args
 	options := CompilerOptions{SkipCompile: true}
 
