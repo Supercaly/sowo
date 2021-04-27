@@ -1,5 +1,9 @@
 # This is a comment
-fun test() {
+fun main() {
     var foo: int = 2;
     var bar: int = 3;
+    bar = 5;
+}
+
+fun sum(a:int, b:int):int {
 }
