@@ -65,6 +65,12 @@ func (lex *Lexer) Tokenize() {
 				lex.Tokens = append(lex.Tokens, Token{TokenEqual, source.ChopOff(1)})
 			case '+':
 				lex.Tokens = append(lex.Tokens, Token{TokenPlus, source.ChopOff(1)})
+			case '-':
+				lex.Tokens = append(lex.Tokens, Token{TokenMinus, source.ChopOff(1)})
+			case '*':
+				lex.Tokens = append(lex.Tokens, Token{TokenAsterisk, source.ChopOff(1)})
+			case '/':
+				lex.Tokens = append(lex.Tokens, Token{TokenSlash, source.ChopOff(1)})
 			case '#':
 				// The comments are dumped since are not needed in next steps
 				source.ChopOff(1)

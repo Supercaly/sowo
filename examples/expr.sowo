@@ -1,6 +1,6 @@
 fun main() {
-    var a: int = 1+(2+3); 
+    var a: int = 1+(2/3); 
     var b: int = 1;
     var c: int = b;
-    b = a + c;
+    b = (a * c) - 1;
 }

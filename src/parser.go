@@ -18,12 +18,23 @@ const (
 	TypeInteger
 )
 
+// Represents the operator of a binary operation.
+type BinaryOperator int
+
+const (
+	OpPlus BinaryOperator = iota
+	OpMinus
+	OpTimes
+	OpDivide
+)
+
 type Ast struct {
 	Type      AstType
 	Children  []Ast
 	Name      string
 	DataType  TypeAnnotation
 	DataValue int
+	Operator  BinaryOperator
 }
 
 type AstType int
@@ -69,6 +80,20 @@ func (t TypeAnnotation) String() (ret string) {
 		ret = "Void"
 	case TypeInteger:
 		ret = "Integer"
+	}
+	return ret
+}
+
+func (op BinaryOperator) String() (ret string) {
+	switch op {
+	case OpPlus:
+		ret = "Plus"
+	case OpMinus:
+		ret = "Minus"
+	case OpTimes:
+		ret = "Times"
+	case OpDivide:
+		ret = "Divide"
 	}
 	return ret
 }
@@ -120,7 +145,10 @@ func (p Parser) currentLocation() int {
 }
 
 func isTokenBinaryOperator(token TokenType) bool {
-	return token == TokenPlus
+	return token == TokenPlus ||
+		token == TokenMinus ||
+		token == TokenAsterisk ||
+		token == TokenSlash
 }
 
 // This method will fail if the expected token has a different
@@ -178,6 +206,22 @@ func (p *Parser) parseFactor() (result Ast) {
 	return result
 }
 
+func tokenToBinaryOp(token TokenType) BinaryOperator {
+	switch token {
+	case TokenPlus:
+		return OpPlus
+	case TokenMinus:
+		return OpMinus
+	case TokenAsterisk:
+		return OpTimes
+	case TokenSlash:
+		return OpDivide
+	default:
+		log.Fatal("[Parser]:", token, "is not a binary operator!")
+		return 0
+	}
+}
+
 // Parses the tokens into a binary operation.
 func (p *Parser) parseBinaryOp() (result Ast) {
 	lhs := p.parseFactor()
@@ -185,9 +229,8 @@ func (p *Parser) parseBinaryOp() (result Ast) {
 		return lhs
 	}
 
-	p.expectTokenType(TokenPlus)
+	result.Operator = tokenToBinaryOp(p.Tokens[0].Type)
 	p.Tokens = p.Tokens[1:]
-
 	rhs := p.parseFactor()
 
 	result.Type = AstBinaryOp
@@ -360,7 +403,18 @@ func DumpAst(ast Ast, level int) {
 	}
 
 	for _, child := range ast.Children {
-		fmt.Printf("%s %s %s \n", strings.Repeat(" ", level), child.Type, child.Name)
+		fmt.Printf("%s %s ", strings.Repeat(" ", level), child.Type)
+		switch child.Type {
+		case AstModule, AstFunction, AstVariable, AstAssignment, AstVariableRef:
+			fmt.Print(child.Name)
+		case AstTypeAnnotation:
+			fmt.Print(child.DataType)
+		case AstBinaryOp:
+			fmt.Print(child.Operator)
+		case AstNumberLiteral:
+			fmt.Print(child.DataValue)
+		}
+		fmt.Print("\n")
 		DumpAst(child, level+1)
 	}
 }
