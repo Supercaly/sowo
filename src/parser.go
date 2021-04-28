@@ -2,6 +2,7 @@ package src
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -40,6 +41,9 @@ const (
 	AstLocalVariable
 	AstExpression
 	AstAssignment
+	AstBinaryOp
+	AstNumberLiteral
+	AstVariableRef
 )
 
 // Represent a parser with methods to
@@ -99,6 +103,14 @@ func (t AstType) String() (ret string) {
 		ret = "AstAssignment"
 	case AstNoop:
 		ret = "AstNoop"
+	case AstBinaryOp:
+		ret = "AstBinaryOp"
+	case AstNumberLiteral:
+		ret = "AstNumberLiteral"
+	case AstVariableRef:
+		ret = "AstVariableRef"
+	default:
+		log.Fatalf("Unknown AstType %d", t)
 	}
 	return ret
 }
@@ -107,11 +119,15 @@ func (p Parser) currentLocation() int {
 	return p.Reporter.OffsetFromInput(p.Tokens[0].Value)
 }
 
+func isTokenBinaryOperator(token TokenType) bool {
+	return token == TokenPlus
+}
+
 // This method will fail if the expected token has a different
 // type from the current parsed token
 func (p Parser) expectTokenType(expected TokenType) {
 	if len(p.Tokens) == 0 || expected != p.Tokens[0].Type {
-		p.Reporter.Fail(p.currentLocation(), "Expected '", expected, "' but got '", p.Tokens[0].Type, "'")
+		p.Reporter.Fail(p.currentLocation(), "[Parser]: Expected '", expected, "' but got '", p.Tokens[0].Type, "'")
 	}
 }
 
@@ -131,19 +147,59 @@ func (p *Parser) parseTypeAnnotation() (result Ast) {
 		returnType = TypeInteger
 		p.Tokens = p.Tokens[1:]
 	default:
-		p.Reporter.Fail(p.currentLocation(), "Unknown type '", p.Tokens[0].Value, "'")
+		p.Reporter.Fail(p.currentLocation(), "[Parser]: Unknown type '", p.Tokens[0].Value, "'")
 	}
 	return Ast{Type: AstTypeAnnotation, DataType: returnType}
 }
 
+// Parses the tokens into operation's factors.
+func (p *Parser) parseFactor() (result Ast) {
+	switch p.Tokens[0].Type {
+	case TokenSymbol:
+		result.Type = AstVariableRef
+		result.Name = p.Tokens[0].Value
+		p.Tokens = p.Tokens[1:]
+	case TokenNumberLiteral:
+		result.Type = AstNumberLiteral
+		number, err := strconv.Atoi(p.Tokens[0].Value)
+		if err != nil {
+			p.Reporter.Fail(0, "[Parser]: ", p.Tokens[0].Value, " is not a number!")
+		}
+		result.DataValue = number
+		p.Tokens = p.Tokens[1:]
+	case TokenOpenParen:
+		p.Tokens = p.Tokens[1:]
+		result = p.parseExpression()
+		p.expectTokenType(TokenCloseParen)
+		p.Tokens = p.Tokens[1:]
+	default:
+		p.Reporter.Fail(0, "[Parser]: Unexpected token ", p.Tokens[0].Type)
+	}
+	return result
+}
+
+// Parses the tokens into a binary operation.
+func (p *Parser) parseBinaryOp() (result Ast) {
+	lhs := p.parseFactor()
+	if len(p.Tokens) == 0 || !isTokenBinaryOperator(p.Tokens[0].Type) {
+		return lhs
+	}
+
+	p.expectTokenType(TokenPlus)
+	p.Tokens = p.Tokens[1:]
+
+	rhs := p.parseFactor()
+
+	result.Type = AstBinaryOp
+	result.Children = make([]Ast, 0, 2)
+	result.Children = append(result.Children, lhs)
+	result.Children = append(result.Children, rhs)
+	return result
+}
+
 // Parses the tokens into an expression.
 func (p *Parser) parseExpression() (result Ast) {
-	p.expectTokenType(TokenNumberConst)
-	result.Type = AstExpression
-	result.DataType = TypeInteger
-	result.DataValue, _ = strconv.Atoi(p.Tokens[0].Value)
-	p.Tokens = p.Tokens[1:]
-	return result
+	return p.parseBinaryOp()
 }
 
 // Parses the tokens into a variable definition.
@@ -198,16 +254,14 @@ func (p *Parser) parseAssignment() (result Ast) {
 func (p *Parser) parseStatement() (result Ast) {
 	switch p.Tokens[0].Type {
 	case TokenVar:
-		result.Type = AstLocalVariable
-		result.Children = append(result.Children, p.parseLocalVarDef())
+		result = p.parseLocalVarDef()
 	case TokenSymbol:
 		if len(p.Tokens) <= 1 {
 			panic("more tokens are needed to parse a symbol a statement")
 		}
 		switch p.Tokens[1].Type {
 		case TokenEqual:
-			result.Type = AstAssignment
-			result.Children = append(result.Children, p.parseAssignment())
+			result = p.parseAssignment()
 		default:
 
 		}

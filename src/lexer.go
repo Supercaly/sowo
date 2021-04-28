@@ -44,7 +44,7 @@ func (lex *Lexer) Tokenize() {
 		} else if unicode.IsNumber(source.First()) {
 			// Tokenize a number literal
 			numberSymbol := source.ChopWhile(isNumber)
-			lex.Tokens = append(lex.Tokens, Token{TokenNumberConst, numberSymbol})
+			lex.Tokens = append(lex.Tokens, Token{TokenNumberLiteral, numberSymbol})
 		} else {
 			switch source.First() {
 			case '(':

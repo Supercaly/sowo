@@ -33,7 +33,7 @@ const (
 	TokenEqual
 	TokenSemicolon
 	TokenPlus
-	TokenNumberConst
+	TokenNumberLiteral
 	TokenHash
 )
 
@@ -63,8 +63,8 @@ func (tt TokenType) String() (ret string) {
 		ret = "Semicolon"
 	case TokenPlus:
 		ret = "Plus"
-	case TokenNumberConst:
-		ret = "NumberConst"
+	case TokenNumberLiteral:
+		ret = "NumberLiteral"
 	case TokenHash:
 		ret = "Hash"
 	default:
