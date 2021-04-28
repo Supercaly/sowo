@@ -57,6 +57,8 @@ const (
 	AstNumberLiteral
 	AstVariableRef
 	AstIf
+	AstFuncCall
+	AstReturn
 )
 
 // Represent a parser with methods to
@@ -144,6 +146,10 @@ func (t AstType) String() (ret string) {
 		ret = "AstVariableRef"
 	case AstIf:
 		ret = "AstIf"
+	case AstFuncCall:
+		ret = "AstFuncCall"
+	case AstReturn:
+		ret = "AstReturn"
 	default:
 		ret = fmt.Sprintf("Unknown AstType %d", t)
 	}
@@ -160,6 +166,24 @@ func isTokenBinaryOperator(token TokenType) bool {
 		token == TokenAsterisk ||
 		token == TokenSlash ||
 		token == TokenEqualEqual
+}
+
+func tokenToBinaryOp(token TokenType) BinaryOperator {
+	switch token {
+	case TokenPlus:
+		return OpPlus
+	case TokenMinus:
+		return OpMinus
+	case TokenAsterisk:
+		return OpTimes
+	case TokenSlash:
+		return OpDivide
+	case TokenEqualEqual:
+		return OpEquals
+	default:
+		log.Fatal("[Parser]: ", token, " is not a binary operator!")
+		return 0
+	}
 }
 
 // This method will fail if the expected token has a different
@@ -195,9 +219,13 @@ func (p *Parser) parseTypeAnnotation() (result Ast) {
 func (p *Parser) parseFactor() (result Ast) {
 	switch p.Tokens[0].Type {
 	case TokenSymbol:
-		result.Type = AstVariableRef
-		result.Name = p.Tokens[0].Value
-		p.Tokens = p.Tokens[1:]
+		if len(p.Tokens) > 3 && p.Tokens[1].Type == TokenOpenParen {
+			result = p.parseFuncCall()
+		} else {
+			result.Type = AstVariableRef
+			result.Name = p.Tokens[0].Value
+			p.Tokens = p.Tokens[1:]
+		}
 	case TokenNumberLiteral:
 		result.Type = AstNumberLiteral
 		number, err := strconv.Atoi(p.Tokens[0].Value)
@@ -215,24 +243,6 @@ func (p *Parser) parseFactor() (result Ast) {
 		p.Reporter.Fail(0, "[Parser]: Unexpected token ", p.Tokens[0].Type)
 	}
 	return result
-}
-
-func tokenToBinaryOp(token TokenType) BinaryOperator {
-	switch token {
-	case TokenPlus:
-		return OpPlus
-	case TokenMinus:
-		return OpMinus
-	case TokenAsterisk:
-		return OpTimes
-	case TokenSlash:
-		return OpDivide
-	case TokenEqualEqual:
-		return OpEquals
-	default:
-		log.Fatal("[Parser]: ", token, " is not a binary operator!")
-		return 0
-	}
 }
 
 // Parses the tokens into a binary operation.
@@ -282,7 +292,13 @@ func (p *Parser) parseLocalVarDef() (result Ast) {
 	p.expectTokenType(TokenEqual)
 	p.Tokens = p.Tokens[1:]
 
-	result.Children = append(result.Children, p.parseExpression())
+	if len(p.Tokens) > 3 &&
+		p.Tokens[0].Type == TokenSymbol &&
+		p.Tokens[1].Type == TokenOpenParen {
+		result.Children = append(result.Children, p.parseFuncCall())
+	} else {
+		result.Children = append(result.Children, p.parseExpression())
+	}
 
 	p.expectTokenType(TokenSemicolon)
 	p.Tokens = p.Tokens[1:]
@@ -298,11 +314,16 @@ func (p *Parser) parseAssignment() (result Ast) {
 	p.expectTokenType(TokenEqual)
 	p.Tokens = p.Tokens[1:]
 
-	result.Children = append(result.Children, p.parseExpression())
+	if len(p.Tokens) > 3 &&
+		p.Tokens[0].Type == TokenSymbol &&
+		p.Tokens[1].Type == TokenOpenParen {
+		result.Children = append(result.Children, p.parseFuncCall())
+	} else {
+		result.Children = append(result.Children, p.parseExpression())
+	}
 
 	p.expectTokenType(TokenSemicolon)
 	p.Tokens = p.Tokens[1:]
-
 	return result
 }
 
@@ -318,12 +339,31 @@ func (p *Parser) parseStatement() (result Ast) {
 		switch p.Tokens[1].Type {
 		case TokenEqual:
 			result = p.parseAssignment()
+		case TokenOpenParen:
+			result = p.parseFuncCall()
+			p.expectTokenType(TokenSemicolon)
+			p.Tokens = p.Tokens[1:]
 		}
 	case TokenIf:
 		result = p.parseIf()
+	case TokenReturn:
+		result = p.parseReturn()
 	default:
 		p.Reporter.Fail(0, "[Parser]: Unexpected token ", p.Tokens[0].Type, " parsing statement")
 	}
+	return result
+}
+
+func (p *Parser) parseReturn() (result Ast) {
+	p.expectTokenType(TokenReturn)
+	p.Tokens = p.Tokens[1:]
+
+	result.Type = AstReturn
+	result.Children = append(result.Children, p.parseExpression())
+
+	p.expectTokenType(TokenSemicolon)
+	p.Tokens = p.Tokens[1:]
+
 	return result
 }
 
@@ -342,6 +382,31 @@ func (p *Parser) parseIf() (result Ast) {
 	}
 
 	result.Type = AstIf
+	return result
+}
+
+func (p *Parser) parseFuncCall() (result Ast) {
+	p.expectTokenType(TokenSymbol)
+	result.Name = p.Tokens[0].Value
+	p.Tokens = p.Tokens[1:]
+
+	p.expectTokenType(TokenOpenParen)
+	p.Tokens = p.Tokens[1:]
+
+	for p.Tokens[0].Type != TokenCloseParen {
+		result.Children = append(result.Children, p.parseExpression())
+
+		if p.Tokens[0].Type != TokenComma {
+			break
+		}
+
+		p.Tokens = p.Tokens[1:]
+	}
+
+	p.expectTokenType(TokenCloseParen)
+	p.Tokens = p.Tokens[1:]
+
+	result.Type = AstFuncCall
 	return result
 }
 
@@ -437,7 +502,9 @@ func DumpAst(ast Ast, level int) {
 	for _, child := range ast.Children {
 		fmt.Printf("%s %s ", strings.Repeat(" ", level), child.Type)
 		switch child.Type {
-		case AstModule, AstFunction, AstVariable, AstAssignment, AstVariableRef:
+		case AstModule, AstFunction,
+			AstVariable, AstAssignment,
+			AstVariableRef, AstFuncCall:
 			fmt.Print(child.Name)
 		case AstTypeAnnotation:
 			fmt.Print(child.DataType)

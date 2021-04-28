@@ -1,0 +1,9 @@
+fun main() {
+    var foo: int = 0;
+    var bar: int = sum(0, 5+1);
+    foo = sum(1, sum(2, 3));
+}
+
+fun sum(a: int, b: int) {
+    return a + b;
+}
