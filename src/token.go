@@ -2,7 +2,6 @@ package src
 
 import (
 	"fmt"
-	"log"
 )
 
 // Represent a single Token.
@@ -31,11 +30,14 @@ const (
 	TokenColon
 	TokenComma
 	TokenEqual
+	TokenEqualEqual
 	TokenSemicolon
 	TokenPlus
 	TokenMinus
 	TokenAsterisk
 	TokenSlash
+	TokenIf
+	TokenElse
 	TokenNumberLiteral
 	TokenHash
 )
@@ -62,6 +64,8 @@ func (tt TokenType) String() (ret string) {
 		ret = "Comma"
 	case TokenEqual:
 		ret = "Equal"
+	case TokenEqualEqual:
+		ret = "EqualEqual"
 	case TokenSemicolon:
 		ret = "Semicolon"
 	case TokenPlus:
@@ -76,8 +80,12 @@ func (tt TokenType) String() (ret string) {
 		ret = "NumberLiteral"
 	case TokenHash:
 		ret = "Hash"
+	case TokenIf:
+		ret = "If"
+	case TokenElse:
+		ret = "Else"
 	default:
-		log.Fatalf("Unexpected token type %d", tt)
+		ret = fmt.Sprintf("Unprintable token %d", tt)
 	}
 	return ret
 }

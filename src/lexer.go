@@ -38,6 +38,10 @@ func (lex *Lexer) Tokenize() {
 				lex.Tokens = append(lex.Tokens, Token{TokenFunc, textSymbol})
 			case "var":
 				lex.Tokens = append(lex.Tokens, Token{TokenVar, textSymbol})
+			case "if":
+				lex.Tokens = append(lex.Tokens, Token{TokenIf, textSymbol})
+			case "else":
+				lex.Tokens = append(lex.Tokens, Token{TokenElse, textSymbol})
 			default:
 				lex.Tokens = append(lex.Tokens, Token{TokenSymbol, textSymbol})
 			}
@@ -62,7 +66,11 @@ func (lex *Lexer) Tokenize() {
 			case ';':
 				lex.Tokens = append(lex.Tokens, Token{TokenSemicolon, source.ChopOff(1)})
 			case '=':
-				lex.Tokens = append(lex.Tokens, Token{TokenEqual, source.ChopOff(1)})
+				if source.value[1] == '=' {
+					lex.Tokens = append(lex.Tokens, Token{TokenEqualEqual, source.ChopOff(2)})
+				} else {
+					lex.Tokens = append(lex.Tokens, Token{TokenEqual, source.ChopOff(1)})
+				}
 			case '+':
 				lex.Tokens = append(lex.Tokens, Token{TokenPlus, source.ChopOff(1)})
 			case '-':
@@ -76,7 +84,7 @@ func (lex *Lexer) Tokenize() {
 				source.ChopOff(1)
 				source.ChopWhile(func(r rune) bool { return !isLineBreak(r) })
 			default:
-				lex.Reporter.Fail(len(lex.Input.value)-len(source.value), "Unexpected character '", string(source.First()), "'")
+				lex.Reporter.Fail(len(lex.Input.value)-len(source.value), "[Lexer]: Unexpected character '", string(source.First()), "'")
 			}
 		}
 		source.TrimSpaceAndNewLine()

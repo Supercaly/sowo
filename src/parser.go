@@ -26,6 +26,7 @@ const (
 	OpMinus
 	OpTimes
 	OpDivide
+	OpEquals
 )
 
 type Ast struct {
@@ -55,6 +56,7 @@ const (
 	AstBinaryOp
 	AstNumberLiteral
 	AstVariableRef
+	AstIf
 )
 
 // Represent a parser with methods to
@@ -80,6 +82,8 @@ func (t TypeAnnotation) String() (ret string) {
 		ret = "Void"
 	case TypeInteger:
 		ret = "Integer"
+	default:
+		ret = fmt.Sprintf("Unknown TypeAnnotation %d", t)
 	}
 	return ret
 }
@@ -94,6 +98,10 @@ func (op BinaryOperator) String() (ret string) {
 		ret = "Times"
 	case OpDivide:
 		ret = "Divide"
+	case OpEquals:
+		ret = "Equals"
+	default:
+		ret = fmt.Sprintf("Unknown BinaryOperator %d", op)
 	}
 	return ret
 }
@@ -134,8 +142,10 @@ func (t AstType) String() (ret string) {
 		ret = "AstNumberLiteral"
 	case AstVariableRef:
 		ret = "AstVariableRef"
+	case AstIf:
+		ret = "AstIf"
 	default:
-		log.Fatalf("Unknown AstType %d", t)
+		ret = fmt.Sprintf("Unknown AstType %d", t)
 	}
 	return ret
 }
@@ -148,7 +158,8 @@ func isTokenBinaryOperator(token TokenType) bool {
 	return token == TokenPlus ||
 		token == TokenMinus ||
 		token == TokenAsterisk ||
-		token == TokenSlash
+		token == TokenSlash ||
+		token == TokenEqualEqual
 }
 
 // This method will fail if the expected token has a different
@@ -216,8 +227,10 @@ func tokenToBinaryOp(token TokenType) BinaryOperator {
 		return OpTimes
 	case TokenSlash:
 		return OpDivide
+	case TokenEqualEqual:
+		return OpEquals
 	default:
-		log.Fatal("[Parser]:", token, "is not a binary operator!")
+		log.Fatal("[Parser]: ", token, " is not a binary operator!")
 		return 0
 	}
 }
@@ -305,11 +318,30 @@ func (p *Parser) parseStatement() (result Ast) {
 		switch p.Tokens[1].Type {
 		case TokenEqual:
 			result = p.parseAssignment()
-		default:
-
 		}
+	case TokenIf:
+		result = p.parseIf()
+	default:
+		p.Reporter.Fail(0, "[Parser]: Unexpected token ", p.Tokens[0].Type, " parsing statement")
 	}
-	// TODO: Add more statements types like if/for/assignments
+	return result
+}
+
+// Parses the tokens into a if/else.
+func (p *Parser) parseIf() (result Ast) {
+	p.expectTokenType(TokenIf)
+	p.Tokens = p.Tokens[1:]
+
+	result.Children = append(result.Children, p.parseExpression())
+	result.Children = append(result.Children, p.parseBlock())
+
+	if p.Tokens[0].Type == TokenElse {
+		p.expectTokenType(TokenElse)
+		p.Tokens = p.Tokens[1:]
+		result.Children = append(result.Children, p.parseBlock())
+	}
+
+	result.Type = AstIf
 	return result
 }
 
