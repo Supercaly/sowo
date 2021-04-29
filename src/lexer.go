@@ -44,6 +44,10 @@ func (lex *Lexer) Tokenize() {
 				lex.Tokens = append(lex.Tokens, Token{TokenElse, textSymbol})
 			case "return":
 				lex.Tokens = append(lex.Tokens, Token{TokenReturn, textSymbol})
+			case "true":
+				lex.Tokens = append(lex.Tokens, Token{TokenTrue, textSymbol})
+			case "false":
+				lex.Tokens = append(lex.Tokens, Token{TokenFalse, textSymbol})
 			default:
 				lex.Tokens = append(lex.Tokens, Token{TokenSymbol, textSymbol})
 			}

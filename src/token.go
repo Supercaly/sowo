@@ -41,6 +41,8 @@ const (
 	TokenNumberLiteral
 	TokenHash
 	TokenReturn
+	TokenTrue
+	TokenFalse
 )
 
 func (tt TokenType) String() (ret string) {
@@ -87,6 +89,10 @@ func (tt TokenType) String() (ret string) {
 		ret = "Else"
 	case TokenReturn:
 		ret = "Return"
+	case TokenTrue:
+		ret = "True"
+	case TokenFalse:
+		ret = "False"
 	default:
 		ret = fmt.Sprintf("Unprintable token %d", tt)
 	}

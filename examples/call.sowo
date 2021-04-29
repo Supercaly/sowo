@@ -4,6 +4,6 @@ fun main() {
     foo = sum(1, sum(2, 3));
 }
 
-fun sum(a: int, b: int) {
+fun sum(a: int, b: int): int {
     return a + b;
 }

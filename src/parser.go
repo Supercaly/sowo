@@ -16,6 +16,7 @@ type TypeAnnotation int
 const (
 	TypeVoid TypeAnnotation = iota
 	TypeInteger
+	TypeBoolean
 )
 
 // Represents the operator of a binary operation.
@@ -30,12 +31,13 @@ const (
 )
 
 type Ast struct {
-	Type      AstType
-	Children  []Ast
-	Name      string
-	DataType  TypeAnnotation
-	DataValue int
-	Operator  BinaryOperator
+	Type             AstType
+	Children         []Ast
+	Name             string
+	DataType         TypeAnnotation
+	NumberDataValue  int
+	BooleanDataValue bool
+	Operator         BinaryOperator
 }
 
 type AstType int
@@ -55,6 +57,7 @@ const (
 	AstAssignment
 	AstBinaryOp
 	AstNumberLiteral
+	AstBooleanLiteral
 	AstVariableRef
 	AstIf
 	AstFuncCall
@@ -84,6 +87,8 @@ func (t TypeAnnotation) String() (ret string) {
 		ret = "Void"
 	case TypeInteger:
 		ret = "Integer"
+	case TypeBoolean:
+		ret = "Boolean"
 	default:
 		ret = fmt.Sprintf("Unknown TypeAnnotation %d", t)
 	}
@@ -142,6 +147,8 @@ func (t AstType) String() (ret string) {
 		ret = "AstBinaryOp"
 	case AstNumberLiteral:
 		ret = "AstNumberLiteral"
+	case AstBooleanLiteral:
+		ret = "AstBooleanLiteral"
 	case AstVariableRef:
 		ret = "AstVariableRef"
 	case AstIf:
@@ -209,6 +216,9 @@ func (p *Parser) parseTypeAnnotation() (result Ast) {
 	case "int":
 		returnType = TypeInteger
 		p.Tokens = p.Tokens[1:]
+	case "bool":
+		returnType = TypeBoolean
+		p.Tokens = p.Tokens[1:]
 	default:
 		p.Reporter.Fail(p.currentLocation(), "[Parser]: Unknown type '", p.Tokens[0].Value, "'")
 	}
@@ -232,7 +242,15 @@ func (p *Parser) parseFactor() (result Ast) {
 		if err != nil {
 			p.Reporter.Fail(0, "[Parser]: ", p.Tokens[0].Value, " is not a number!")
 		}
-		result.DataValue = number
+		result.NumberDataValue = number
+		p.Tokens = p.Tokens[1:]
+	case TokenTrue, TokenFalse:
+		result.Type = AstBooleanLiteral
+		if p.Tokens[0].Type == TokenTrue {
+			result.BooleanDataValue = true
+		} else {
+			result.BooleanDataValue = false
+		}
 		p.Tokens = p.Tokens[1:]
 	case TokenOpenParen:
 		p.Tokens = p.Tokens[1:]
@@ -511,7 +529,7 @@ func DumpAst(ast Ast, level int) {
 		case AstBinaryOp:
 			fmt.Print(child.Operator)
 		case AstNumberLiteral:
-			fmt.Print(child.DataValue)
+			fmt.Print(child.NumberDataValue)
 		}
 		fmt.Print("\n")
 		DumpAst(child, level+1)
