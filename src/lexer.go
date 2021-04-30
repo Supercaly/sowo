@@ -2,13 +2,14 @@ package src
 
 import (
 	"fmt"
+	"strings"
 	"unicode"
 )
 
 // Struct representing a lexer.
 type Lexer struct {
 	// The program string in input.
-	Input InputStr
+	Input string
 	// List of tokens.
 	Tokens []Token
 	// Instance of error reporter
@@ -18,7 +19,7 @@ type Lexer struct {
 // Factory that returns a new Lexer.
 func NewLexer(input string, reporter Reporter) Lexer {
 	return Lexer{
-		Input:    InputStr{input},
+		Input:    input,
 		Reporter: reporter,
 	}
 }
@@ -26,12 +27,13 @@ func NewLexer(input string, reporter Reporter) Lexer {
 // Converts the program string in input to a list of tokens
 func (lex *Lexer) Tokenize() {
 	source := lex.Input
-	source.TrimSpaceAndNewLine()
+	source = trimSpaceAndNewLine(source)
 
-	for !source.IsEmpty() {
-		if isSymbolStart(source.First()) {
+	for !isEmpty(source) {
+		if isSymbolStart(getFirst(source)) {
 			// Tokenize a valid symbol
-			textSymbol := source.ChopWhile(isSymbol)
+			textSymbol, tail := chopWhile(source, isSymbol)
+			source = tail
 
 			switch textSymbol {
 			case "fun":
@@ -53,61 +55,96 @@ func (lex *Lexer) Tokenize() {
 			default:
 				lex.Tokens = append(lex.Tokens, Token{TokenSymbol, textSymbol})
 			}
-		} else if unicode.IsNumber(source.First()) {
+		} else if unicode.IsNumber(getFirst(source)) {
 			// Tokenize a number literal
-			numberSymbol := source.ChopWhile(isNumber)
+			numberSymbol, tail := chopWhile(source, isNumber)
+			source = tail
 			lex.Tokens = append(lex.Tokens, Token{TokenNumberLiteral, numberSymbol})
 		} else {
-			switch source.First() {
+			switch getFirst(source) {
 			case '(':
-				lex.Tokens = append(lex.Tokens, Token{TokenOpenParen, source.ChopOff(1)})
+				tokenStr, tail := chopOff(source, 1)
+				source = tail
+				lex.Tokens = append(lex.Tokens, Token{TokenOpenParen, tokenStr})
 			case ')':
-				lex.Tokens = append(lex.Tokens, Token{TokenCloseParen, source.ChopOff(1)})
+				tokenStr, tail := chopOff(source, 1)
+				source = tail
+				lex.Tokens = append(lex.Tokens, Token{TokenCloseParen, tokenStr})
 			case '{':
-				lex.Tokens = append(lex.Tokens, Token{TokenOpenCurly, source.ChopOff(1)})
+				tokenStr, tail := chopOff(source, 1)
+				source = tail
+				lex.Tokens = append(lex.Tokens, Token{TokenOpenCurly, tokenStr})
 			case '}':
-				lex.Tokens = append(lex.Tokens, Token{TokenCloseCurly, source.ChopOff(1)})
+				tokenStr, tail := chopOff(source, 1)
+				source = tail
+				lex.Tokens = append(lex.Tokens, Token{TokenCloseCurly, tokenStr})
 			case ':':
-				lex.Tokens = append(lex.Tokens, Token{TokenColon, source.ChopOff(1)})
+				tokenStr, tail := chopOff(source, 1)
+				source = tail
+				lex.Tokens = append(lex.Tokens, Token{TokenColon, tokenStr})
 			case ',':
-				lex.Tokens = append(lex.Tokens, Token{TokenComma, source.ChopOff(1)})
+				tokenStr, tail := chopOff(source, 1)
+				source = tail
+				lex.Tokens = append(lex.Tokens, Token{TokenComma, tokenStr})
 			case ';':
-				lex.Tokens = append(lex.Tokens, Token{TokenSemicolon, source.ChopOff(1)})
+				tokenStr, tail := chopOff(source, 1)
+				source = tail
+				lex.Tokens = append(lex.Tokens, Token{TokenSemicolon, tokenStr})
 			case '=':
-				if source.value[1] == '=' {
-					lex.Tokens = append(lex.Tokens, Token{TokenEqualEqual, source.ChopOff(2)})
+				if source[1] == '=' {
+					tokenStr, tail := chopOff(source, 2)
+					source = tail
+					lex.Tokens = append(lex.Tokens, Token{TokenEqualEqual, tokenStr})
 				} else {
-					lex.Tokens = append(lex.Tokens, Token{TokenEqual, source.ChopOff(1)})
+					tokenStr, tail := chopOff(source, 1)
+					source = tail
+					lex.Tokens = append(lex.Tokens, Token{TokenEqual, tokenStr})
 				}
 			case '<':
-				if source.value[1] == '=' {
-					lex.Tokens = append(lex.Tokens, Token{TokenLessThenEqual, source.ChopOff(2)})
+				if source[1] == '=' {
+					tokenStr, tail := chopOff(source, 2)
+					source = tail
+					lex.Tokens = append(lex.Tokens, Token{TokenLessThenEqual, tokenStr})
 				} else {
-					lex.Tokens = append(lex.Tokens, Token{TokenLessThen, source.ChopOff(1)})
+					tokenStr, tail := chopOff(source, 1)
+					source = tail
+					lex.Tokens = append(lex.Tokens, Token{TokenLessThen, tokenStr})
 				}
 			case '>':
-				if source.value[1] == '=' {
-					lex.Tokens = append(lex.Tokens, Token{TokenGreatherThenEqual, source.ChopOff(2)})
+				if source[1] == '=' {
+					tokenStr, tail := chopOff(source, 2)
+					source = tail
+					lex.Tokens = append(lex.Tokens, Token{TokenGreatherThenEqual, tokenStr})
 				} else {
-					lex.Tokens = append(lex.Tokens, Token{TokenGreatherThen, source.ChopOff(1)})
+					tokenStr, tail := chopOff(source, 1)
+					source = tail
+					lex.Tokens = append(lex.Tokens, Token{TokenGreatherThen, tokenStr})
 				}
 			case '+':
-				lex.Tokens = append(lex.Tokens, Token{TokenPlus, source.ChopOff(1)})
+				tokenStr, tail := chopOff(source, 1)
+				source = tail
+				lex.Tokens = append(lex.Tokens, Token{TokenPlus, tokenStr})
 			case '-':
-				lex.Tokens = append(lex.Tokens, Token{TokenMinus, source.ChopOff(1)})
+				tokenStr, tail := chopOff(source, 1)
+				source = tail
+				lex.Tokens = append(lex.Tokens, Token{TokenMinus, tokenStr})
 			case '*':
-				lex.Tokens = append(lex.Tokens, Token{TokenAsterisk, source.ChopOff(1)})
+				tokenStr, tail := chopOff(source, 1)
+				source = tail
+				lex.Tokens = append(lex.Tokens, Token{TokenAsterisk, tokenStr})
 			case '/':
-				lex.Tokens = append(lex.Tokens, Token{TokenSlash, source.ChopOff(1)})
+				tokenStr, tail := chopOff(source, 1)
+				source = tail
+				lex.Tokens = append(lex.Tokens, Token{TokenSlash, tokenStr})
 			case '#':
 				// The comments are dumped since are not needed in next steps
-				source.ChopOff(1)
-				source.ChopWhile(func(r rune) bool { return !isLineBreak(r) })
+				_, tail := chopWhile(source, func(r rune) bool { return !isLineBreak(r) })
+				source = tail
 			default:
-				lex.Reporter.Fail(len(lex.Input.value)-len(source.value), "[Lexer]: Unexpected character '", string(source.First()), "'")
+				lex.Reporter.Fail(len(lex.Input)-len(source), "[Lexer]: Unexpected character '", string(getFirst(source)), "'")
 			}
 		}
-		source.TrimSpaceAndNewLine()
+		source = trimSpaceAndNewLine(source)
 	}
 }
 
@@ -116,6 +153,32 @@ func (lex Lexer) DumpTokens() {
 	for _, token := range lex.Tokens {
 		fmt.Printf("%s -> \"%s\"\n", token.Type, token.Value)
 	}
+}
+
+func chopOff(in string, n int) (head string, tail string) {
+	return in[:n], in[n:]
+}
+
+func chopWhile(in string, predicate func(r rune) bool) (head string, tail string) {
+	n := 0
+	for n < len(in) && predicate(rune(in[n])) {
+		n++
+	}
+	return chopOff(in, n)
+}
+
+func trimSpaceAndNewLine(in string) string {
+	return strings.TrimLeftFunc(in, func(r rune) bool {
+		return isSpace(r) || isTab(r) || isLineBreak(r)
+	})
+}
+
+func isEmpty(in string) bool {
+	return len(in) == 0
+}
+
+func getFirst(in string) rune {
+	return rune(in[0])
 }
 
 func isSymbolStart(s rune) bool {
@@ -132,4 +195,12 @@ func isNumber(s rune) bool {
 
 func isLineBreak(s rune) bool {
 	return s == '\r' || s == '\n'
+}
+
+func isSpace(s rune) bool {
+	return s == ' '
+}
+
+func isTab(s rune) bool {
+	return s == '\t'
 }
