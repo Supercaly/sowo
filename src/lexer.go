@@ -44,6 +44,8 @@ func (lex *Lexer) Tokenize() {
 				lex.Tokens = append(lex.Tokens, Token{TokenElse, textSymbol})
 			case "return":
 				lex.Tokens = append(lex.Tokens, Token{TokenReturn, textSymbol})
+			case "while":
+				lex.Tokens = append(lex.Tokens, Token{TokenWhile, textSymbol})
 			case "true":
 				lex.Tokens = append(lex.Tokens, Token{TokenTrue, textSymbol})
 			case "false":
@@ -76,6 +78,18 @@ func (lex *Lexer) Tokenize() {
 					lex.Tokens = append(lex.Tokens, Token{TokenEqualEqual, source.ChopOff(2)})
 				} else {
 					lex.Tokens = append(lex.Tokens, Token{TokenEqual, source.ChopOff(1)})
+				}
+			case '<':
+				if source.value[1] == '=' {
+					lex.Tokens = append(lex.Tokens, Token{TokenLessThenEqual, source.ChopOff(2)})
+				} else {
+					lex.Tokens = append(lex.Tokens, Token{TokenLessThen, source.ChopOff(1)})
+				}
+			case '>':
+				if source.value[1] == '=' {
+					lex.Tokens = append(lex.Tokens, Token{TokenGreatherThenEqual, source.ChopOff(2)})
+				} else {
+					lex.Tokens = append(lex.Tokens, Token{TokenGreatherThen, source.ChopOff(1)})
 				}
 			case '+':
 				lex.Tokens = append(lex.Tokens, Token{TokenPlus, source.ChopOff(1)})

@@ -31,6 +31,10 @@ const (
 	TokenComma
 	TokenEqual
 	TokenEqualEqual
+	TokenLessThen
+	TokenGreatherThen
+	TokenLessThenEqual
+	TokenGreatherThenEqual
 	TokenSemicolon
 	TokenPlus
 	TokenMinus
@@ -38,6 +42,7 @@ const (
 	TokenSlash
 	TokenIf
 	TokenElse
+	TokenWhile
 	TokenNumberLiteral
 	TokenHash
 	TokenReturn
@@ -69,6 +74,14 @@ func (tt TokenType) String() (ret string) {
 		ret = "Equal"
 	case TokenEqualEqual:
 		ret = "EqualEqual"
+	case TokenLessThen:
+		ret = "LessThen"
+	case TokenGreatherThen:
+		ret = "GreatherThen"
+	case TokenLessThenEqual:
+		ret = "LessThenEqual"
+	case TokenGreatherThenEqual:
+		ret = "GreatherThenEqual"
 	case TokenSemicolon:
 		ret = "Semicolon"
 	case TokenPlus:
@@ -87,6 +100,8 @@ func (tt TokenType) String() (ret string) {
 		ret = "If"
 	case TokenElse:
 		ret = "Else"
+	case TokenWhile:
+		ret = "While"
 	case TokenReturn:
 		ret = "Return"
 	case TokenTrue:

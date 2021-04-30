@@ -28,6 +28,10 @@ const (
 	OpTimes
 	OpDivide
 	OpEquals
+	OpLessThen
+	OpGreatherThen
+	OpLessThenEqual
+	OpGreatherThenEqual
 )
 
 type Ast struct {
@@ -60,6 +64,7 @@ const (
 	AstBooleanLiteral
 	AstVariableRef
 	AstIf
+	AstWhile
 	AstFuncCall
 	AstReturn
 )
@@ -107,6 +112,14 @@ func (op BinaryOperator) String() (ret string) {
 		ret = "Divide"
 	case OpEquals:
 		ret = "Equals"
+	case OpLessThen:
+		ret = "LessThen"
+	case OpGreatherThen:
+		ret = "GreatherThen"
+	case OpLessThenEqual:
+		ret = "LessThenEqual"
+	case OpGreatherThenEqual:
+		ret = "GreatherThenEqual"
 	default:
 		ret = fmt.Sprintf("Unknown BinaryOperator %d", op)
 	}
@@ -153,6 +166,8 @@ func (t AstType) String() (ret string) {
 		ret = "AstVariableRef"
 	case AstIf:
 		ret = "AstIf"
+	case AstWhile:
+		ret = "AstWhile"
 	case AstFuncCall:
 		ret = "AstFuncCall"
 	case AstReturn:
@@ -172,7 +187,11 @@ func isTokenBinaryOperator(token TokenType) bool {
 		token == TokenMinus ||
 		token == TokenAsterisk ||
 		token == TokenSlash ||
-		token == TokenEqualEqual
+		token == TokenEqualEqual ||
+		token == TokenLessThen ||
+		token == TokenGreatherThen ||
+		token == TokenLessThenEqual ||
+		token == TokenGreatherThenEqual
 }
 
 func tokenToBinaryOp(token TokenType) BinaryOperator {
@@ -187,6 +206,14 @@ func tokenToBinaryOp(token TokenType) BinaryOperator {
 		return OpDivide
 	case TokenEqualEqual:
 		return OpEquals
+	case TokenLessThen:
+		return OpLessThen
+	case TokenGreatherThen:
+		return OpGreatherThen
+	case TokenLessThenEqual:
+		return OpLessThenEqual
+	case TokenGreatherThenEqual:
+		return OpGreatherThenEqual
 	default:
 		log.Fatal("[Parser]: ", token, " is not a binary operator!")
 		return 0
@@ -364,6 +391,8 @@ func (p *Parser) parseStatement() (result Ast) {
 		}
 	case TokenIf:
 		result = p.parseIf()
+	case TokenWhile:
+		result = p.parseWhile()
 	case TokenReturn:
 		result = p.parseReturn()
 	default:
@@ -403,6 +432,17 @@ func (p *Parser) parseIf() (result Ast) {
 	return result
 }
 
+func (p *Parser) parseWhile() (result Ast) {
+	p.expectTokenType(TokenWhile)
+	p.Tokens = p.Tokens[1:]
+
+	result.Type = AstWhile
+	result.Children = append(result.Children, p.parseExpression())
+	result.Children = append(result.Children, p.parseBlock())
+	return result
+}
+
+// Parses the tokens into a function call.
 func (p *Parser) parseFuncCall() (result Ast) {
 	p.expectTokenType(TokenSymbol)
 	result.Name = p.Tokens[0].Value
