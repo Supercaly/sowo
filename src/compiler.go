@@ -16,15 +16,13 @@ func SowoCompileFile(options CompilerOptions) {
 
 // Compiles a sowo program string given some options
 func SowoCompile(src string, options CompilerOptions) {
-	reporter := Reporter{Input: src, FileName: options.InputFile}
-
-	lexer := Lexer{Input: src, Reporter: reporter}
+	lexer := Lexer{Input: src}
 	tokens := lexer.tokenize()
 	if options.PrintTokens {
 		DumpTokens(tokens)
 	}
 
-	parser := Parser{Reporter: reporter, Tokens: tokens}
+	parser := Parser{Tokens: tokens}
 	ast := parser.parseModule()
 	if options.PrintAst {
 		DumpAst(ast, 0)

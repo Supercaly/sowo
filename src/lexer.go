@@ -2,6 +2,7 @@ package src
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"unicode"
 )
@@ -10,8 +11,6 @@ import (
 type Lexer struct {
 	// The program string in input.
 	Input string
-	// Instance of error reporter
-	Reporter Reporter
 }
 
 // Converts the program string in input to a list of tokens
@@ -131,7 +130,7 @@ func (lex *Lexer) tokenize() (tokens []Token) {
 				_, tail := chopWhile(source, func(r rune) bool { return !isLineBreak(r) })
 				source = tail
 			default:
-				lex.Reporter.Fail(len(lex.Input)-len(source), "[Lexer]: Unexpected character '", string(getFirst(source)), "'")
+				log.Fatal("[Lexer]: Unexpected character '", string(getFirst(source)), "'")
 			}
 		}
 		source = trimSpaceAndNewLine(source)

@@ -74,8 +74,6 @@ const (
 type Parser struct {
 	// List of tokens that need to be parsed
 	Tokens []Token
-	// Instance of a Reporter to log errors
-	Reporter Reporter
 }
 
 func (t TypeAnnotation) String() (ret string) {
@@ -170,10 +168,6 @@ func (t AstType) String() (ret string) {
 	return ret
 }
 
-func (p Parser) currentLocation() int {
-	return p.Reporter.OffsetFromInput(p.Tokens[0].Value)
-}
-
 func isTokenBinaryOperator(token TokenType) bool {
 	return token == TokenPlus ||
 		token == TokenMinus ||
@@ -216,7 +210,7 @@ func tokenToBinaryOp(token TokenType) BinaryOperator {
 // type from the current parsed token
 func (p Parser) expectTokenType(expected TokenType) {
 	if len(p.Tokens) == 0 || expected != p.Tokens[0].Type {
-		p.Reporter.Fail(p.currentLocation(), "[Parser]: Expected '", expected, "' but got '", p.Tokens[0].Type, "'")
+		log.Fatal("[Parser]: Expected '", expected, "' but got '", p.Tokens[0].Type, "'")
 	}
 }
 
@@ -239,7 +233,7 @@ func (p *Parser) parseTypeAnnotation() (result Ast) {
 		returnType = TypeBoolean
 		p.Tokens = p.Tokens[1:]
 	default:
-		p.Reporter.Fail(p.currentLocation(), "[Parser]: Unknown type '", p.Tokens[0].Value, "'")
+		log.Fatal("[Parser]: Unknown data type '", p.Tokens[0].Value, "'")
 	}
 	return Ast{Type: AstTypeAnnotation, DataType: returnType}
 }
@@ -259,7 +253,7 @@ func (p *Parser) parseFactor() (result Ast) {
 		result.Type = AstNumberLiteral
 		number, err := strconv.Atoi(p.Tokens[0].Value)
 		if err != nil {
-			p.Reporter.Fail(0, "[Parser]: ", p.Tokens[0].Value, " is not a number!")
+			log.Fatal("[Parser]: ", p.Tokens[0].Value, " is not a number!")
 		}
 		result.NumberDataValue = number
 		p.Tokens = p.Tokens[1:]
@@ -277,7 +271,7 @@ func (p *Parser) parseFactor() (result Ast) {
 		p.expectTokenType(TokenCloseParen)
 		p.Tokens = p.Tokens[1:]
 	default:
-		p.Reporter.Fail(0, "[Parser]: Unexpected token ", p.Tokens[0].Type)
+		log.Fatal("[Parser]: Unexpected factor ", p.Tokens[0].Type)
 	}
 	return result
 }
@@ -371,7 +365,7 @@ func (p *Parser) parseStatement() (result Ast) {
 		result = p.parseLocalVarDef()
 	case TokenSymbol:
 		if len(p.Tokens) <= 1 {
-			panic("more tokens are needed to parse a symbol a statement")
+			log.Fatal("more tokens are needed to parse a symbol a statement")
 		}
 		switch p.Tokens[1].Type {
 		case TokenEqual:
@@ -388,7 +382,7 @@ func (p *Parser) parseStatement() (result Ast) {
 	case TokenReturn:
 		result = p.parseReturn()
 	default:
-		p.Reporter.Fail(0, "[Parser]: Unexpected token ", p.Tokens[0].Type, " parsing statement")
+		log.Fatal("[Parser]: Unexpected token ", p.Tokens[0].Type, " parsing statement")
 	}
 	return result
 }
