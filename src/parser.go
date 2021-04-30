@@ -78,14 +78,6 @@ type Parser struct {
 	Reporter Reporter
 }
 
-// Factory that returns a new Parser.
-func NewParser(tokens []Token, reporter Reporter) Parser {
-	return Parser{
-		Tokens:   tokens,
-		Reporter: reporter,
-	}
-}
-
 func (t TypeAnnotation) String() (ret string) {
 	switch t {
 	case TypeVoid:
@@ -543,7 +535,7 @@ func (p *Parser) parseFuncDef() (result Ast) {
 }
 
 // Parse a list of tokens into a Module.
-func (p *Parser) ParseModule() (result Ast) {
+func (p *Parser) parseModule() (result Ast) {
 	result.Type = AstModule
 	for len(p.Tokens) > 0 {
 		result.Children = append(result.Children, p.parseFuncDef())

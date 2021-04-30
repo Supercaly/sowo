@@ -15,7 +15,7 @@ type Lexer struct {
 }
 
 // Converts the program string in input to a list of tokens
-func (lex *Lexer) Tokenize() (tokens []Token) {
+func (lex *Lexer) tokenize() (tokens []Token) {
 	source := lex.Input
 	source = trimSpaceAndNewLine(source)
 
