@@ -10,22 +10,12 @@ import (
 type Lexer struct {
 	// The program string in input.
 	Input string
-	// List of tokens.
-	Tokens []Token
 	// Instance of error reporter
 	Reporter Reporter
 }
 
-// Factory that returns a new Lexer.
-func NewLexer(input string, reporter Reporter) Lexer {
-	return Lexer{
-		Input:    input,
-		Reporter: reporter,
-	}
-}
-
 // Converts the program string in input to a list of tokens
-func (lex *Lexer) Tokenize() {
+func (lex *Lexer) Tokenize() (tokens []Token) {
 	source := lex.Input
 	source = trimSpaceAndNewLine(source)
 
@@ -37,105 +27,105 @@ func (lex *Lexer) Tokenize() {
 
 			switch textSymbol {
 			case "fun":
-				lex.Tokens = append(lex.Tokens, Token{TokenFunc, textSymbol})
+				tokens = append(tokens, Token{TokenFunc, textSymbol})
 			case "var":
-				lex.Tokens = append(lex.Tokens, Token{TokenVar, textSymbol})
+				tokens = append(tokens, Token{TokenVar, textSymbol})
 			case "if":
-				lex.Tokens = append(lex.Tokens, Token{TokenIf, textSymbol})
+				tokens = append(tokens, Token{TokenIf, textSymbol})
 			case "else":
-				lex.Tokens = append(lex.Tokens, Token{TokenElse, textSymbol})
+				tokens = append(tokens, Token{TokenElse, textSymbol})
 			case "return":
-				lex.Tokens = append(lex.Tokens, Token{TokenReturn, textSymbol})
+				tokens = append(tokens, Token{TokenReturn, textSymbol})
 			case "while":
-				lex.Tokens = append(lex.Tokens, Token{TokenWhile, textSymbol})
+				tokens = append(tokens, Token{TokenWhile, textSymbol})
 			case "true":
-				lex.Tokens = append(lex.Tokens, Token{TokenTrue, textSymbol})
+				tokens = append(tokens, Token{TokenTrue, textSymbol})
 			case "false":
-				lex.Tokens = append(lex.Tokens, Token{TokenFalse, textSymbol})
+				tokens = append(tokens, Token{TokenFalse, textSymbol})
 			default:
-				lex.Tokens = append(lex.Tokens, Token{TokenSymbol, textSymbol})
+				tokens = append(tokens, Token{TokenSymbol, textSymbol})
 			}
-		} else if unicode.IsNumber(getFirst(source)) {
+		} else if isNumberLiteral(getFirst(source)) {
 			// Tokenize a number literal
 			numberSymbol, tail := chopWhile(source, isNumber)
 			source = tail
-			lex.Tokens = append(lex.Tokens, Token{TokenNumberLiteral, numberSymbol})
+			tokens = append(tokens, Token{TokenNumberLiteral, numberSymbol})
 		} else {
 			switch getFirst(source) {
 			case '(':
 				tokenStr, tail := chopOff(source, 1)
 				source = tail
-				lex.Tokens = append(lex.Tokens, Token{TokenOpenParen, tokenStr})
+				tokens = append(tokens, Token{TokenOpenParen, tokenStr})
 			case ')':
 				tokenStr, tail := chopOff(source, 1)
 				source = tail
-				lex.Tokens = append(lex.Tokens, Token{TokenCloseParen, tokenStr})
+				tokens = append(tokens, Token{TokenCloseParen, tokenStr})
 			case '{':
 				tokenStr, tail := chopOff(source, 1)
 				source = tail
-				lex.Tokens = append(lex.Tokens, Token{TokenOpenCurly, tokenStr})
+				tokens = append(tokens, Token{TokenOpenCurly, tokenStr})
 			case '}':
 				tokenStr, tail := chopOff(source, 1)
 				source = tail
-				lex.Tokens = append(lex.Tokens, Token{TokenCloseCurly, tokenStr})
+				tokens = append(tokens, Token{TokenCloseCurly, tokenStr})
 			case ':':
 				tokenStr, tail := chopOff(source, 1)
 				source = tail
-				lex.Tokens = append(lex.Tokens, Token{TokenColon, tokenStr})
+				tokens = append(tokens, Token{TokenColon, tokenStr})
 			case ',':
 				tokenStr, tail := chopOff(source, 1)
 				source = tail
-				lex.Tokens = append(lex.Tokens, Token{TokenComma, tokenStr})
+				tokens = append(tokens, Token{TokenComma, tokenStr})
 			case ';':
 				tokenStr, tail := chopOff(source, 1)
 				source = tail
-				lex.Tokens = append(lex.Tokens, Token{TokenSemicolon, tokenStr})
+				tokens = append(tokens, Token{TokenSemicolon, tokenStr})
 			case '=':
 				if source[1] == '=' {
 					tokenStr, tail := chopOff(source, 2)
 					source = tail
-					lex.Tokens = append(lex.Tokens, Token{TokenEqualEqual, tokenStr})
+					tokens = append(tokens, Token{TokenEqualEqual, tokenStr})
 				} else {
 					tokenStr, tail := chopOff(source, 1)
 					source = tail
-					lex.Tokens = append(lex.Tokens, Token{TokenEqual, tokenStr})
+					tokens = append(tokens, Token{TokenEqual, tokenStr})
 				}
 			case '<':
 				if source[1] == '=' {
 					tokenStr, tail := chopOff(source, 2)
 					source = tail
-					lex.Tokens = append(lex.Tokens, Token{TokenLessThenEqual, tokenStr})
+					tokens = append(tokens, Token{TokenLessThenEqual, tokenStr})
 				} else {
 					tokenStr, tail := chopOff(source, 1)
 					source = tail
-					lex.Tokens = append(lex.Tokens, Token{TokenLessThen, tokenStr})
+					tokens = append(tokens, Token{TokenLessThen, tokenStr})
 				}
 			case '>':
 				if source[1] == '=' {
 					tokenStr, tail := chopOff(source, 2)
 					source = tail
-					lex.Tokens = append(lex.Tokens, Token{TokenGreatherThenEqual, tokenStr})
+					tokens = append(tokens, Token{TokenGreatherThenEqual, tokenStr})
 				} else {
 					tokenStr, tail := chopOff(source, 1)
 					source = tail
-					lex.Tokens = append(lex.Tokens, Token{TokenGreatherThen, tokenStr})
+					tokens = append(tokens, Token{TokenGreatherThen, tokenStr})
 				}
 			case '+':
 				tokenStr, tail := chopOff(source, 1)
 				source = tail
-				lex.Tokens = append(lex.Tokens, Token{TokenPlus, tokenStr})
+				tokens = append(tokens, Token{TokenPlus, tokenStr})
 			case '-':
 				tokenStr, tail := chopOff(source, 1)
 				source = tail
-				lex.Tokens = append(lex.Tokens, Token{TokenMinus, tokenStr})
+				tokens = append(tokens, Token{TokenMinus, tokenStr})
 			case '*':
 				tokenStr, tail := chopOff(source, 1)
 				source = tail
-				lex.Tokens = append(lex.Tokens, Token{TokenAsterisk, tokenStr})
+				tokens = append(tokens, Token{TokenAsterisk, tokenStr})
 			case '/':
 				tokenStr, tail := chopOff(source, 1)
 				source = tail
-				lex.Tokens = append(lex.Tokens, Token{TokenSlash, tokenStr})
+				tokens = append(tokens, Token{TokenSlash, tokenStr})
 			case '#':
 				// The comments are dumped since are not needed in next steps
 				_, tail := chopWhile(source, func(r rune) bool { return !isLineBreak(r) })
@@ -146,11 +136,12 @@ func (lex *Lexer) Tokenize() {
 		}
 		source = trimSpaceAndNewLine(source)
 	}
+	return tokens
 }
 
 // Print all the tokens
-func (lex Lexer) DumpTokens() {
-	for _, token := range lex.Tokens {
+func DumpTokens(tokens []Token) {
+	for _, token := range tokens {
 		fmt.Printf("%s -> \"%s\"\n", token.Type, token.Value)
 	}
 }
@@ -187,6 +178,10 @@ func isSymbolStart(s rune) bool {
 
 func isSymbol(s rune) bool {
 	return unicode.IsLetter(s) || unicode.IsNumber(s) || s == rune('_')
+}
+
+func isNumberLiteral(s rune) bool {
+	return unicode.IsNumber(s)
 }
 
 func isNumber(s rune) bool {
