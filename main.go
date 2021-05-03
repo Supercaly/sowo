@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	sowo "github.com/Supercaly/sowo/src"
 )
@@ -10,7 +12,7 @@ import (
 // Creates new CompilerOptions from command line arguments.
 func optionsFromCommandLine() sowo.CompilerOptions {
 	args := os.Args
-	options := sowo.CompilerOptions{SkipCompile: true}
+	options := sowo.CompilerOptions{}
 
 	for i := 1; i < len(args); i++ {
 		if args[i] == "-o" || args[i] == "--output" {
@@ -46,6 +48,17 @@ func optionsFromCommandLine() sowo.CompilerOptions {
 		fmt.Println("An input file must be specified!")
 		usage()
 		os.Exit(1)
+	}
+
+	if len(options.OutputFile) == 0 {
+		inName := strings.TrimSuffix(filepath.Base(options.InputFile), filepath.Ext(options.InputFile))
+		inDir := filepath.Dir(options.InputFile)
+		outNameWithExt := inName + ".asm"
+		options.OutputFile = filepath.Join(inDir, outNameWithExt)
+		options.OutputName = inName
+	} else {
+		outName := strings.TrimSuffix(filepath.Base(options.OutputFile), filepath.Ext(options.OutputFile))
+		options.OutputName = outName
 	}
 
 	return options
