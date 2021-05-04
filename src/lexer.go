@@ -2,6 +2,7 @@ package src
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"strings"
 	"unicode"
@@ -139,9 +140,9 @@ func (lex *Lexer) tokenize() (tokens []Token) {
 }
 
 // Print all the tokens
-func DumpTokens(tokens []Token) {
+func DumpTokens(w io.Writer, tokens []Token) {
 	for _, token := range tokens {
-		fmt.Printf("%s -> \"%s\"\n", token.Type, token.Value)
+		fmt.Fprintf(w, "%s -> \"%s\"\n", token.Type, token.Value)
 	}
 }
 

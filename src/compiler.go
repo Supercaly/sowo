@@ -3,6 +3,7 @@ package src
 import (
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -20,14 +21,30 @@ func SowoCompileFile(options CompilerOptions) {
 	lexer := Lexer{Input: string(content)}
 	tokens := lexer.tokenize()
 	if options.PrintTokens {
-		DumpTokens(tokens)
+		DumpTokens(os.Stdout, tokens)
+	} else if options.SaveTokens {
+		tokPath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile)) + "_tok.txt"
+		f, err := os.Create(tokPath)
+		if err != nil {
+			log.Fatalf("Error writing tokens to %s", tokPath)
+		}
+		defer f.Close()
+		DumpTokens(f, tokens)
 	}
 
 	// Parse
 	parser := Parser{Tokens: tokens}
 	ast := parser.parseModule()
 	if options.PrintAst {
-		DumpAst(ast, 0)
+		DumpAst(os.Stdout, ast)
+	} else if options.SaveAst {
+		astPath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile)) + "_ast.json"
+		f, err := os.Create(astPath)
+		if err != nil {
+			log.Fatalf("Error writing ast to %s", astPath)
+		}
+		defer f.Close()
+		DumpAst(f, ast)
 	}
 
 	if !options.SkipCompile {

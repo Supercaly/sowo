@@ -1,10 +1,12 @@
 package src
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"strconv"
-	"strings"
 )
 
 // Represents the type of a variable.
@@ -537,27 +539,22 @@ func (p *Parser) parseModule() (result Ast) {
 	return result
 }
 
-// Prints the AST.
-func DumpAst(ast Ast, level int) {
-	if level == 0 {
-		fmt.Printf("%s \n", ast.Type)
-	}
+func (t AstType) MarshalJSON() ([]byte, error) {
+	buffer := bytes.NewBufferString("\"")
+	buffer.WriteString(t.String())
+	buffer.WriteString("\"")
+	return buffer.Bytes(), nil
+}
 
-	for _, child := range ast.Children {
-		fmt.Printf("%s %s ", strings.Repeat(" ", level), child.Type)
-		switch child.Type {
-		case AstModule, AstFunction,
-			AstVariable, AstAssignment,
-			AstVariableRef, AstFuncCall:
-			fmt.Print(child.Name)
-		case AstTypeAnnotation:
-			fmt.Print(child.DataType)
-		case AstBinaryOp:
-			fmt.Print(child.Operator)
-		case AstNumberLiteral:
-			fmt.Print(child.NumberDataValue)
-		}
-		fmt.Print("\n")
-		DumpAst(child, level+1)
-	}
+func (op BinaryOperator) MarshalJSON() ([]byte, error) {
+	buffer := bytes.NewBufferString("\"")
+	buffer.WriteString(op.String())
+	buffer.WriteString("\"")
+	return buffer.Bytes(), nil
+}
+
+// Prints the AST.
+func DumpAst(w io.Writer, ast Ast) {
+	jsonBytes, _ := json.MarshalIndent(ast, "", "  ")
+	fmt.Fprintln(w, string(jsonBytes))
 }

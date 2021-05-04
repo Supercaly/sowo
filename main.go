@@ -33,6 +33,14 @@ func optionsFromCommandLine() sowo.CompilerOptions {
 			options.PrintAst = true
 			continue
 		}
+		if args[i] == "--save-tokens" {
+			options.SaveTokens = true
+			continue
+		}
+		if args[i] == "--save-ast" {
+			options.SaveAst = true
+			continue
+		}
 		if args[i] == "-n" || args[i] == "--no-compile" {
 			options.SkipCompile = true
 			continue
@@ -68,6 +76,8 @@ func usage() {
 	fmt.Println(" -o, --output [input].asm : Specify the output file name.")
 	fmt.Println(" -t, --print-tokens   : Print the tokens.")
 	fmt.Println(" -p, --print-ast      : Print the AST.")
+	fmt.Println(" --save-tokens        : Save the tokens to a file.")
+	fmt.Println(" --save-ast           : Save the AST to a file.")
 	fmt.Println(" -n, --no-compile     : Stop the process before the compilation step.")
 	fmt.Println(" -h, --help           : Prints this help message.")
 	fmt.Println()

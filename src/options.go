@@ -4,6 +4,8 @@ package src
 type CompilerOptions struct {
 	PrintTokens bool
 	PrintAst    bool
+	SaveTokens  bool
+	SaveAst     bool
 	SkipCompile bool
 	InputFile   string
 	OutputFile  string
