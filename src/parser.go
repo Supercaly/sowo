@@ -553,6 +553,13 @@ func (op BinaryOperator) MarshalJSON() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
+func (t TypeAnnotation) MarshalJSON() ([]byte, error) {
+	buffer := bytes.NewBufferString("\"")
+	buffer.WriteString(t.String())
+	buffer.WriteString("\"")
+	return buffer.Bytes(), nil
+}
+
 // Prints the AST.
 func DumpAst(w io.Writer, ast Ast) {
 	jsonBytes, _ := json.MarshalIndent(ast, "", "  ")

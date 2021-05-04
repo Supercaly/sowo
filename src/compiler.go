@@ -1,10 +1,10 @@
 package src
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -49,28 +49,30 @@ func SowoCompileFile(options CompilerOptions) {
 
 	if !options.SkipCompile {
 		// Compile
-		asm := compileToAsm(ast)
+		//asm := compileToAsm(ast)
+		ir := generateIR(ast)
+		fmt.Println(ir)
 
 		// Write compiled asm to file
-		err = ioutil.WriteFile(options.OutputFile, []byte(asm), 0777)
+		err = ioutil.WriteFile(options.OutputFile, []byte(ir), 0777)
 		if err != nil {
 			log.Fatalf("Error writing to file %s", options.OutputFile)
 		}
 
 		// Load asm to binary executable
-		oFilePath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile)) + ".o"
-		exeFilePath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile))
+		//oFilePath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile)) + ".o"
+		//exeFilePath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile))
 
-		nasmCmd := exec.Command("nasm", "-felf64", options.OutputFile)
-		ldCmd := exec.Command("ld", "-o", exeFilePath, oFilePath)
+		// nasmCmd := exec.Command("nasm", "-felf64", options.OutputFile)
+		// ldCmd := exec.Command("ld", "-o", exeFilePath, oFilePath)
 
-		_, err = nasmCmd.Output()
-		if err != nil {
-			log.Fatalf("Error running nasm %s", err)
-		}
-		_, err = ldCmd.Output()
-		if err != nil {
-			log.Fatalf("Error running ld %s", err)
-		}
+		// _, err = nasmCmd.Output()
+		// if err != nil {
+		// 	log.Fatalf("Error running nasm %s", err)
+		// }
+		// _, err = ldCmd.Output()
+		// if err != nil {
+		// 	log.Fatalf("Error running ld %s", err)
+		// }
 	}
 }

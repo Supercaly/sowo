@@ -61,7 +61,7 @@ func optionsFromCommandLine() sowo.CompilerOptions {
 	if len(options.OutputFile) == 0 {
 		inName := strings.TrimSuffix(filepath.Base(options.InputFile), filepath.Ext(options.InputFile))
 		inDir := filepath.Dir(options.InputFile)
-		outNameWithExt := inName + ".asm"
+		outNameWithExt := inName + ".c" //".asm"
 		options.OutputFile = filepath.Join(inDir, outNameWithExt)
 	}
 
