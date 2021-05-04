@@ -31,9 +31,9 @@ const (
 	OpDivide
 	OpEquals
 	OpLessThen
-	OpGreatherThen
+	OpGreaterThen
 	OpLessThenEqual
-	OpGreatherThenEqual
+	OpGreaterThenEqual
 )
 
 type Ast struct {
@@ -106,12 +106,12 @@ func (op BinaryOperator) String() (ret string) {
 		ret = "Equals"
 	case OpLessThen:
 		ret = "LessThen"
-	case OpGreatherThen:
-		ret = "GreatherThen"
+	case OpGreaterThen:
+		ret = "GreaterThen"
 	case OpLessThenEqual:
 		ret = "LessThenEqual"
-	case OpGreatherThenEqual:
-		ret = "GreatherThenEqual"
+	case OpGreaterThenEqual:
+		ret = "GreaterThenEqual"
 	default:
 		ret = fmt.Sprintf("Unknown BinaryOperator %d", op)
 	}
@@ -177,9 +177,9 @@ func isTokenBinaryOperator(token TokenType) bool {
 		token == TokenSlash ||
 		token == TokenEqualEqual ||
 		token == TokenLessThen ||
-		token == TokenGreatherThen ||
+		token == TokenGreaterThen ||
 		token == TokenLessThenEqual ||
-		token == TokenGreatherThenEqual
+		token == TokenGreaterThenEqual
 }
 
 func tokenToBinaryOp(token TokenType) BinaryOperator {
@@ -196,12 +196,12 @@ func tokenToBinaryOp(token TokenType) BinaryOperator {
 		return OpEquals
 	case TokenLessThen:
 		return OpLessThen
-	case TokenGreatherThen:
-		return OpGreatherThen
+	case TokenGreaterThen:
+		return OpGreaterThen
 	case TokenLessThenEqual:
 		return OpLessThenEqual
-	case TokenGreatherThenEqual:
-		return OpGreatherThenEqual
+	case TokenGreaterThenEqual:
+		return OpGreaterThenEqual
 	default:
 		log.Fatal("[Parser]: ", token, " is not a binary operator!")
 		return 0

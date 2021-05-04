@@ -32,9 +32,9 @@ const (
 	TokenEqual
 	TokenEqualEqual
 	TokenLessThen
-	TokenGreatherThen
+	TokenGreaterThen
 	TokenLessThenEqual
-	TokenGreatherThenEqual
+	TokenGreaterThenEqual
 	TokenSemicolon
 	TokenPlus
 	TokenMinus
@@ -76,12 +76,12 @@ func (tt TokenType) String() (ret string) {
 		ret = "EqualEqual"
 	case TokenLessThen:
 		ret = "LessThen"
-	case TokenGreatherThen:
-		ret = "GreatherThen"
+	case TokenGreaterThen:
+		ret = "GreaterThen"
 	case TokenLessThenEqual:
 		ret = "LessThenEqual"
-	case TokenGreatherThenEqual:
-		ret = "GreatherThenEqual"
+	case TokenGreaterThenEqual:
+		ret = "GreaterThenEqual"
 	case TokenSemicolon:
 		ret = "Semicolon"
 	case TokenPlus:

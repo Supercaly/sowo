@@ -104,11 +104,11 @@ func (lex *Lexer) tokenize() (tokens []Token) {
 				if source[1] == '=' {
 					tokenStr, tail := chopOff(source, 2)
 					source = tail
-					tokens = append(tokens, Token{TokenGreatherThenEqual, tokenStr})
+					tokens = append(tokens, Token{TokenGreaterThenEqual, tokenStr})
 				} else {
 					tokenStr, tail := chopOff(source, 1)
 					source = tail
-					tokens = append(tokens, Token{TokenGreatherThen, tokenStr})
+					tokens = append(tokens, Token{TokenGreaterThen, tokenStr})
 				}
 			case '+':
 				tokenStr, tail := chopOff(source, 1)
