@@ -21,7 +21,7 @@ func irModule(ast Ast) (value string) {
 }
 
 func irMain(ast Ast) (value string) {
-	value += "int main(int *argc, int **argv) {\n"
+	value += "int main(int argc, char **argv) {\n"
 	value += irBody(ast.Children[2])
 	value += "return 0;\n"
 	value += "}\n"
@@ -69,10 +69,53 @@ func irVariable(ast Ast) (value string) {
 	return value
 }
 
+func irOperator(op BinaryOperator) string {
+	switch op {
+	case OpPlus:
+		return "+"
+	case OpMinus:
+		return "-"
+	case OpTimes:
+		return "*"
+	case OpDivide:
+		return "/"
+	case OpEquals:
+		return "=="
+	case OpLessThen:
+		return "<"
+	case OpGreaterThen:
+		return ">"
+	case OpLessThenEqual:
+		return "<="
+	case OpGreaterThenEqual:
+		return ">="
+	default:
+		log.Fatalf("Unknown operator %s", op)
+	}
+	return ""
+}
+
 func irExpression(ast Ast) (value string) {
 	switch ast.Type {
 	case AstNumberLiteral:
 		value += strconv.Itoa(ast.NumberDataValue)
+	case AstBinaryOp:
+		value += "("
+		value += irExpression(ast.Children[0])
+		value += irOperator(ast.Operator)
+		value += irExpression(ast.Children[1])
+		value += ")"
+	case AstVariableRef:
+		value += ast.Name
+	case AstFuncCall:
+		value += fmt.Sprintf("%s(", ast.Name)
+		for i, param := range ast.Children {
+			value += irExpression(param)
+			if i != len(ast.Children)-1 {
+				value += ", "
+			}
+		}
+		value += ")"
 	default:
 		log.Fatalf("Unknown expression %s", ast.Type)
 	}
@@ -86,6 +129,15 @@ func irBody(ast Ast) (value string) {
 			value += fmt.Sprintf("%s = %s;\n", irVariable(statement.Children[0]), irExpression(statement.Children[1]))
 		case AstAssignment:
 			value += fmt.Sprintf("%s = %s;\n", statement.Name, irExpression(statement.Children[0]))
+		case AstIf:
+			value += fmt.Sprintf("if %s {\n%s}\n", irExpression(statement.Children[0]), irBody(statement.Children[1]))
+			if len(statement.Children) == 3 {
+				value += fmt.Sprintf("else {\n%s}\n", irBody(statement.Children[2]))
+			}
+		case AstWhile:
+			value += fmt.Sprintf("while %s {\n%s}\n", irExpression(statement.Children[0]), irBody(statement.Children[1]))
+		case AstReturn:
+			value += fmt.Sprintf("return %s\n", irExpression(statement.Children[0]))
 		default:
 			log.Fatalf("Unknown statement %s", statement.Type)
 		}

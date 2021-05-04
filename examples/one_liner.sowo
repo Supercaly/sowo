@@ -1,1 +1,1 @@
-fun oneLine() {var a: int = 4; var b:int = 3;}
+fun main() {var a: int = 4; var b:int = 3;}
