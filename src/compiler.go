@@ -1,7 +1,6 @@
 package src
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os/exec"
@@ -11,18 +10,37 @@ import (
 
 // Compiles a sowo program file given some options
 func SowoCompileFile(options CompilerOptions) {
+	// Read input file
 	content, err := ioutil.ReadFile(options.InputFile)
 	if err != nil {
 		log.Fatalf("Error opening file %s", options.InputFile)
 	}
-	compiled := SowoCompile(string(content), options)
+
+	// Tokenize
+	lexer := Lexer{Input: string(content)}
+	tokens := lexer.tokenize()
+	if options.PrintTokens {
+		DumpTokens(tokens)
+	}
+
+	// Parse
+	parser := Parser{Tokens: tokens}
+	ast := parser.parseModule()
+	if options.PrintAst {
+		DumpAst(ast, 0)
+	}
 
 	if !options.SkipCompile {
-		err = ioutil.WriteFile(options.OutputFile, []byte(compiled), 0777)
+		// Compile
+		asm := compileToAsm(ast)
+
+		// Write compiled asm to file
+		err = ioutil.WriteFile(options.OutputFile, []byte(asm), 0777)
 		if err != nil {
 			log.Fatalf("Error writing to file %s", options.OutputFile)
 		}
 
+		// Load asm to binary executable
 		oFilePath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile)) + ".o"
 		exeFilePath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile))
 
@@ -38,28 +56,4 @@ func SowoCompileFile(options CompilerOptions) {
 			log.Fatalf("Error running ld %s", err)
 		}
 	}
-}
-
-// Compiles a sowo program string given some options
-func SowoCompile(src string, options CompilerOptions) string {
-	lexer := Lexer{Input: src}
-	tokens := lexer.tokenize()
-	if options.PrintTokens {
-		DumpTokens(tokens)
-	}
-
-	parser := Parser{Tokens: tokens}
-	ast := parser.parseModule()
-	if options.PrintAst {
-		DumpAst(ast, 0)
-	}
-
-	asm := compileToAsm(ast)
-	fmt.Print(asm)
-
-	if !options.SkipCompile {
-		return asm
-	}
-	return ""
-
 }

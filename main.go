@@ -55,10 +55,6 @@ func optionsFromCommandLine() sowo.CompilerOptions {
 		inDir := filepath.Dir(options.InputFile)
 		outNameWithExt := inName + ".asm"
 		options.OutputFile = filepath.Join(inDir, outNameWithExt)
-		options.OutputName = inName
-	} else {
-		outName := strings.TrimSuffix(filepath.Base(options.OutputFile), filepath.Ext(options.OutputFile))
-		options.OutputName = outName
 	}
 
 	return options
@@ -69,7 +65,7 @@ func usage() {
 	fmt.Println("Usage: main.go [options...] [input.sowo]")
 	fmt.Println()
 	fmt.Println("Options:")
-	fmt.Println(" -o, --output out.asm : Specify the output filename.")
+	fmt.Println(" -o, --output [input].asm : Specify the output file name.")
 	fmt.Println(" -t, --print-tokens   : Print the tokens.")
 	fmt.Println(" -p, --print-ast      : Print the AST.")
 	fmt.Println(" -n, --no-compile     : Stop the process before the compilation step.")

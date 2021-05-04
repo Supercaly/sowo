@@ -7,5 +7,4 @@ type CompilerOptions struct {
 	SkipCompile bool
 	InputFile   string
 	OutputFile  string
-	OutputName  string
 }
