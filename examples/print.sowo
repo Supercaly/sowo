@@ -1,7 +1,7 @@
 fun main() {
     var a: int = 1+(2*3); 
     var b: int = a + 1;
-    print(a*f());
+    print(a*f(), "dummy_string");
     print(b);
 }
 
