@@ -1,7 +1,6 @@
 package src
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -36,8 +35,12 @@ func SowoCompileFile(options CompilerOptions) {
 	// Parse
 	parser := Parser{Tokens: tokens}
 	ast := parser.parseModule()
+
+	// Check types
+	checkTypeOfModule(ast)
+
 	if options.PrintAst {
-		DumpAst(os.Stdout, ast)
+		DumpAst(os.Stdout, *ast)
 	}
 	if options.SaveAst {
 		astPath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile)) + "_ast.json"
@@ -46,15 +49,12 @@ func SowoCompileFile(options CompilerOptions) {
 			log.Fatalf("Error writing ast to %s", astPath)
 		}
 		defer f.Close()
-		DumpAst(f, ast)
+		DumpAst(f, *ast)
 	}
-
-	checkTypeOfModule(ast)
 
 	if !options.SkipCompile {
 		// Compile
-		ir := generateIR(ast)
-		fmt.Println(ir)
+		ir := generateIR(*ast)
 
 		// Write compiled asm to file
 		err = ioutil.WriteFile(options.OutputFile, []byte(ir), 0777)

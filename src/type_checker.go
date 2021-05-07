@@ -40,18 +40,15 @@ func pushScope(ast *Ast) {
 		newScope = Scope{}
 	}
 	scopes = append(scopes, newScope)
-	fmt.Println("push", scopes)
 }
 
 func popScope() {
 	scopes = scopes[:len(scopes)-1]
-	fmt.Println("pop", scopes)
 }
 
 func pushVarDef(ast Ast) {
 	varDef := VarDef{Name: ast.Name, Type: ast.Children[0].DataType}
 	scopes[len(scopes)-1].vars = append(scopes[len(scopes)-1].vars, varDef)
-	fmt.Println("push_var", scopes)
 }
 
 func typeOfVarWithName(name string) (TypeAnnotation, error) {
@@ -90,11 +87,11 @@ func typeOfExpression(ast Ast) (ret TypeAnnotation, err error) {
 	case AstVariableRef:
 		ret, err = typeOfVarWithName(ast.Name)
 	case AstBinaryOp:
-		lhsType, lErr := typeOfExpression(ast.Children[0])
+		lhsType, lErr := typeOfExpression(*ast.Children[0])
 		if lErr != nil {
 			return TypeVoid, lErr
 		}
-		rhsType, rErr := typeOfExpression(ast.Children[1])
+		rhsType, rErr := typeOfExpression(*ast.Children[1])
 		if rErr != nil {
 			return TypeVoid, rErr
 		}
@@ -109,7 +106,7 @@ func typeOfExpression(ast Ast) (ret TypeAnnotation, err error) {
 	return ret, err
 }
 
-func checkTypeOfFuncCall(ast Ast, expectedType TypeAnnotation) {
+func checkTypeOfFuncCall(ast *Ast, expectedType TypeAnnotation) {
 	funcType, err := typeOfFuncWithName(ast.Name)
 	if err != nil {
 		log.Fatal(err)
@@ -117,11 +114,12 @@ func checkTypeOfFuncCall(ast Ast, expectedType TypeAnnotation) {
 	if expectedType != funcType {
 		log.Fatalf("[Type Check]: Expected type '%s' but function has type '%s'", expectedType, funcType)
 	}
+	ast.DataType = funcType
 }
 
-func checkTypeOfBinaryOp(ast Ast, expectedType TypeAnnotation) {
-	lhsType, lErr := typeOfExpression(ast.Children[0])
-	rhsType, rErr := typeOfExpression(ast.Children[1])
+func checkTypeOfBinaryOp(ast *Ast, expectedType TypeAnnotation) {
+	lhsType, lErr := typeOfExpression(*ast.Children[0])
+	rhsType, rErr := typeOfExpression(*ast.Children[1])
 
 	if lErr != nil {
 		log.Fatalf("[Type Check]: Binary operation: %s", lErr)
@@ -129,7 +127,6 @@ func checkTypeOfBinaryOp(ast Ast, expectedType TypeAnnotation) {
 	if rErr != nil {
 		log.Fatalf("[Type Check]: Binary operation: %s", rErr)
 	}
-	fmt.Println(lhsType, rhsType)
 	switch ast.Operator {
 	case OpPlus, OpMinus, OpTimes, OpDivide,
 		OpEquals, OpLessThen, OpGreaterThen, OpLessThenEqual, OpGreaterThenEqual:
@@ -142,20 +139,23 @@ func checkTypeOfBinaryOp(ast Ast, expectedType TypeAnnotation) {
 	}
 }
 
-func checkTypeOfExpression(ast Ast, expectedType TypeAnnotation) {
+func checkTypeOfExpression(ast *Ast, expectedType TypeAnnotation) {
 	switch ast.Type {
 	case AstNumberLiteral:
 		if expectedType != TypeInteger {
 			log.Fatalf("[Type Check]: Expected type '%s' but expression has type '%s'", expectedType, TypeInteger)
 		}
+		ast.DataType = TypeInteger
 	case AstBooleanLiteral:
 		if expectedType != TypeBoolean {
 			log.Fatalf("[Type Check]: Expected type '%s' but expression has type '%s'", expectedType, TypeBoolean)
 		}
+		ast.DataType = TypeBoolean
 	case AstStringLiteral:
 		if expectedType != TypeString {
 			log.Fatalf("[Type Check]: Expected type '%s' but expression has type '%s'", expectedType, TypeString)
 		}
+		ast.DataType = TypeString
 	case AstFuncCall:
 		checkTypeOfFuncCall(ast, expectedType)
 	case AstVariableRef:
@@ -166,14 +166,16 @@ func checkTypeOfExpression(ast Ast, expectedType TypeAnnotation) {
 		if varType != expectedType {
 			log.Fatalf("[Type Check]: Expected variable reference with type '%s' but got '%s'", expectedType, varType)
 		}
+		ast.DataType = varType
 	case AstBinaryOp:
 		checkTypeOfBinaryOp(ast, expectedType)
+		ast.DataType = expectedType
 	default:
 		log.Fatalf("[Type Check]: Unsupported expression '%s'", ast.Type)
 	}
 }
 
-func checkTypeOfAssignment(ast Ast) {
+func checkTypeOfAssignment(ast *Ast) {
 	varType, err := typeOfVarWithName(ast.Name)
 	if err != nil {
 		log.Fatal(err)
@@ -181,13 +183,13 @@ func checkTypeOfAssignment(ast Ast) {
 	checkTypeOfExpression(ast.Children[0], varType)
 }
 
-func checkTypeOfLocalVar(ast Ast) {
+func checkTypeOfLocalVar(ast *Ast) {
 	varType := ast.Children[0].Children[0].DataType
 	checkTypeOfExpression(ast.Children[1], varType)
-	pushVarDef(ast.Children[0])
+	pushVarDef(*ast.Children[0])
 }
 
-func checkTypeOfIf(ast Ast, expectedType TypeAnnotation) {
+func checkTypeOfIf(ast *Ast, expectedType TypeAnnotation) {
 	checkTypeOfExpression(ast.Children[0], TypeBoolean)
 	checkTypeOfBlock(ast.Children[1], expectedType)
 	if len(ast.Children) == 3 {
@@ -195,25 +197,26 @@ func checkTypeOfIf(ast Ast, expectedType TypeAnnotation) {
 	}
 }
 
-func checkTypeOfWhile(ast Ast, expectedType TypeAnnotation) {
+func checkTypeOfWhile(ast *Ast, expectedType TypeAnnotation) {
 	checkTypeOfExpression(ast.Children[0], TypeBoolean)
 	checkTypeOfBlock(ast.Children[1], expectedType)
 }
 
-func checkTypeOfReturn(ast Ast, expectedType TypeAnnotation) {
+func checkTypeOfReturn(ast *Ast, expectedType TypeAnnotation) {
 	checkTypeOfExpression(ast.Children[0], expectedType)
 }
 
-func checkTypeOfPrint(ast Ast) {
+func checkTypeOfPrint(ast *Ast) {
 	for _, expr := range ast.Children {
-		_, err := typeOfExpression(expr)
+		exprType, err := typeOfExpression(*expr)
 		if err != nil {
 			log.Fatalf("[Type Check]: %s", err)
 		}
+		checkTypeOfExpression(expr, exprType)
 	}
 }
 
-func checkTypeOfStatement(ast Ast, expectedType TypeAnnotation) {
+func checkTypeOfStatement(ast *Ast, expectedType TypeAnnotation) {
 	switch ast.Type {
 	case AstLocalVariable:
 		checkTypeOfLocalVar(ast)
@@ -232,7 +235,7 @@ func checkTypeOfStatement(ast Ast, expectedType TypeAnnotation) {
 	}
 }
 
-func checkTypeOfBlock(ast Ast, expectedType TypeAnnotation) {
+func checkTypeOfBlock(ast *Ast, expectedType TypeAnnotation) {
 	pushScope(nil)
 
 	if len(ast.Children) == 0 {
@@ -248,19 +251,19 @@ func checkTypeOfBlock(ast Ast, expectedType TypeAnnotation) {
 	popScope()
 }
 
-func checkTypeOfFunction(ast Ast) {
+func checkTypeOfFunction(ast *Ast) {
 	if currentFuncDef != nil {
 		log.Fatal("Checking types of function in the context of other function.")
 	}
-	currentFuncDef = &ast
-	pushScope(&ast)
+	currentFuncDef = ast
+	pushScope(ast)
 	checkTypeOfBlock(ast.Children[2], ast.Children[1].Children[0].DataType)
 	currentFuncDef = nil
 	popScope()
 }
 
-func checkTypeOfModule(ast Ast) {
-	currentModule = &ast
+func checkTypeOfModule(ast *Ast) {
+	currentModule = ast
 	for _, funcDef := range ast.Children {
 		switch funcDef.Type {
 		case AstFunction:

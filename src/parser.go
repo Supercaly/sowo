@@ -39,7 +39,7 @@ const (
 
 type Ast struct {
 	Type             AstType
-	Children         []Ast
+	Children         []*Ast
 	Name             string
 	DataType         TypeAnnotation
 	NumberDataValue  int
@@ -227,7 +227,8 @@ func (p Parser) expectTokenType(expected TokenType) {
 }
 
 // Parses the tokens into a type annotation.
-func (p *Parser) parseTypeAnnotation() (result Ast) {
+func (p *Parser) parseTypeAnnotation() (result *Ast) {
+	result = &Ast{}
 	p.expectTokenType(TokenColon)
 	p.Tokens = p.Tokens[1:]
 
@@ -250,11 +251,12 @@ func (p *Parser) parseTypeAnnotation() (result Ast) {
 	default:
 		log.Fatal("[Parser]: Unknown data type '", p.Tokens[0].Value, "'")
 	}
-	return Ast{Type: AstTypeAnnotation, DataType: returnType}
+	return &Ast{Type: AstTypeAnnotation, DataType: returnType}
 }
 
 // Parses the tokens into operation's factors.
-func (p *Parser) parseFactor() (result Ast) {
+func (p *Parser) parseFactor() (result *Ast) {
+	result = &Ast{}
 	switch p.Tokens[0].Type {
 	case TokenSymbol:
 		if len(p.Tokens) > 3 && p.Tokens[1].Type == TokenOpenParen {
@@ -296,7 +298,8 @@ func (p *Parser) parseFactor() (result Ast) {
 }
 
 // Parses the tokens into a binary operation.
-func (p *Parser) parseBinaryOp() (result Ast) {
+func (p *Parser) parseBinaryOp() (result *Ast) {
+	result = &Ast{}
 	lhs := p.parseFactor()
 	if len(p.Tokens) == 0 || !isTokenBinaryOperator(p.Tokens[0].Type) {
 		return lhs
@@ -307,19 +310,20 @@ func (p *Parser) parseBinaryOp() (result Ast) {
 	rhs := p.parseFactor()
 
 	result.Type = AstBinaryOp
-	result.Children = make([]Ast, 0, 2)
+	result.Children = make([]*Ast, 0, 2)
 	result.Children = append(result.Children, lhs)
 	result.Children = append(result.Children, rhs)
 	return result
 }
 
 // Parses the tokens into an expression.
-func (p *Parser) parseExpression() (result Ast) {
+func (p *Parser) parseExpression() (result *Ast) {
 	return p.parseBinaryOp()
 }
 
 // Parses the tokens into a variable definition.
-func (p *Parser) parseVarDef() (result Ast) {
+func (p *Parser) parseVarDef() (result *Ast) {
+	result = &Ast{}
 	p.expectTokenType(TokenSymbol)
 	result.Name = p.Tokens[0].Value
 	p.Tokens = p.Tokens[1:]
@@ -330,7 +334,8 @@ func (p *Parser) parseVarDef() (result Ast) {
 }
 
 // Parses the tokens into a local variable definition.
-func (p *Parser) parseLocalVarDef() (result Ast) {
+func (p *Parser) parseLocalVarDef() (result *Ast) {
+	result = &Ast{}
 	p.expectTokenType(TokenVar)
 	p.Tokens = p.Tokens[1:]
 
@@ -355,7 +360,8 @@ func (p *Parser) parseLocalVarDef() (result Ast) {
 	return result
 }
 
-func (p *Parser) parseAssignment() (result Ast) {
+func (p *Parser) parseAssignment() (result *Ast) {
+	result = &Ast{}
 	result.Type = AstAssignment
 	p.expectTokenType(TokenSymbol)
 	result.Name = p.Tokens[0].Value
@@ -378,7 +384,8 @@ func (p *Parser) parseAssignment() (result Ast) {
 }
 
 // Parses the tokens into a statement.
-func (p *Parser) parseStatement() (result Ast) {
+func (p *Parser) parseStatement() (result *Ast) {
+	result = &Ast{}
 	switch p.Tokens[0].Type {
 	case TokenVar:
 		result = p.parseLocalVarDef()
@@ -408,7 +415,8 @@ func (p *Parser) parseStatement() (result Ast) {
 	return result
 }
 
-func (p *Parser) parseReturn() (result Ast) {
+func (p *Parser) parseReturn() (result *Ast) {
+	result = &Ast{}
 	p.expectTokenType(TokenReturn)
 	p.Tokens = p.Tokens[1:]
 
@@ -422,7 +430,8 @@ func (p *Parser) parseReturn() (result Ast) {
 }
 
 // Parses the tokens into a if/else.
-func (p *Parser) parseIf() (result Ast) {
+func (p *Parser) parseIf() (result *Ast) {
+	result = &Ast{}
 	p.expectTokenType(TokenIf)
 	p.Tokens = p.Tokens[1:]
 
@@ -439,7 +448,8 @@ func (p *Parser) parseIf() (result Ast) {
 	return result
 }
 
-func (p *Parser) parseWhile() (result Ast) {
+func (p *Parser) parseWhile() (result *Ast) {
+	result = &Ast{}
 	p.expectTokenType(TokenWhile)
 	p.Tokens = p.Tokens[1:]
 
@@ -450,7 +460,8 @@ func (p *Parser) parseWhile() (result Ast) {
 }
 
 // Parses the tokens into a print call.
-func (p *Parser) parsePrint() (result Ast) {
+func (p *Parser) parsePrint() (result *Ast) {
+	result = &Ast{}
 	p.expectTokenType(TokenPrint)
 	p.Tokens = p.Tokens[1:]
 
@@ -478,7 +489,8 @@ func (p *Parser) parsePrint() (result Ast) {
 }
 
 // Parses the tokens into a function call.
-func (p *Parser) parseFuncCall() (result Ast) {
+func (p *Parser) parseFuncCall() (result *Ast) {
+	result = &Ast{}
 	p.expectTokenType(TokenSymbol)
 	result.Name = p.Tokens[0].Value
 	p.Tokens = p.Tokens[1:]
@@ -504,11 +516,12 @@ func (p *Parser) parseFuncCall() (result Ast) {
 }
 
 // Parses the tokens into a block.
-func (p *Parser) parseBlock() (result Ast) {
+func (p *Parser) parseBlock() (result *Ast) {
+	result = &Ast{}
 	p.expectTokenType(TokenOpenCurly)
 	p.Tokens = p.Tokens[1:]
 
-	var statements []Ast
+	var statements []*Ast
 	for len(p.Tokens) > 0 && p.Tokens[0].Type != TokenCloseCurly {
 		statements = append(statements, p.parseStatement())
 	}
@@ -524,7 +537,8 @@ func (p *Parser) parseBlock() (result Ast) {
 }
 
 // Parses the tokens into a function's arguments list.
-func (p *Parser) parseFuncArgs() (result Ast) {
+func (p *Parser) parseFuncArgs() (result *Ast) {
+	result = &Ast{}
 	p.expectTokenType(TokenOpenParen)
 	p.Tokens = p.Tokens[1:]
 
@@ -546,18 +560,20 @@ func (p *Parser) parseFuncArgs() (result Ast) {
 }
 
 // Parses the tokens into a function's return type.
-func (p *Parser) parseFuncReturnType() (result Ast) {
+func (p *Parser) parseFuncReturnType() (result *Ast) {
+	result = &Ast{}
 	result.Type = AstFuncReturnType
 	if p.Tokens[0].Type == TokenColon {
 		result.Children = append(result.Children, p.parseTypeAnnotation())
 	} else {
-		result.Children = append(result.Children, Ast{Type: AstTypeAnnotation, DataType: TypeVoid})
+		result.Children = append(result.Children, &Ast{Type: AstTypeAnnotation, DataType: TypeVoid})
 	}
 	return result
 }
 
 // Parses the tokens into a function definition.
-func (p *Parser) parseFuncDef() (result Ast) {
+func (p *Parser) parseFuncDef() (result *Ast) {
+	result = &Ast{}
 	p.expectTokenType(TokenFunc)
 	p.Tokens = p.Tokens[1:]
 
@@ -578,7 +594,8 @@ func (p *Parser) parseFuncDef() (result Ast) {
 }
 
 // Parse a list of tokens into a Module.
-func (p *Parser) parseModule() (result Ast) {
+func (p *Parser) parseModule() (result *Ast) {
+	result = &Ast{}
 	result.Type = AstModule
 	for len(p.Tokens) > 0 {
 		result.Children = append(result.Children, p.parseFuncDef())
