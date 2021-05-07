@@ -22,7 +22,8 @@ func SowoCompileFile(options CompilerOptions) {
 	tokens := lexer.tokenize()
 	if options.PrintTokens {
 		DumpTokens(os.Stdout, tokens)
-	} else if options.SaveTokens {
+	}
+	if options.SaveTokens {
 		tokPath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile)) + "_tok.txt"
 		f, err := os.Create(tokPath)
 		if err != nil {
@@ -37,7 +38,8 @@ func SowoCompileFile(options CompilerOptions) {
 	ast := parser.parseModule()
 	if options.PrintAst {
 		DumpAst(os.Stdout, ast)
-	} else if options.SaveAst {
+	}
+	if options.SaveAst {
 		astPath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile)) + "_ast.json"
 		f, err := os.Create(astPath)
 		if err != nil {
@@ -47,9 +49,10 @@ func SowoCompileFile(options CompilerOptions) {
 		DumpAst(f, ast)
 	}
 
+	checkTypeOfModule(ast)
+
 	if !options.SkipCompile {
 		// Compile
-		//asm := compileToAsm(ast)
 		ir := generateIR(ast)
 		fmt.Println(ir)
 
@@ -58,21 +61,5 @@ func SowoCompileFile(options CompilerOptions) {
 		if err != nil {
 			log.Fatalf("Error writing to file %s", options.OutputFile)
 		}
-
-		// Load asm to binary executable
-		//oFilePath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile)) + ".o"
-		//exeFilePath := strings.TrimSuffix(options.OutputFile, filepath.Ext(options.OutputFile))
-
-		// nasmCmd := exec.Command("nasm", "-felf64", options.OutputFile)
-		// ldCmd := exec.Command("ld", "-o", exeFilePath, oFilePath)
-
-		// _, err = nasmCmd.Output()
-		// if err != nil {
-		// 	log.Fatalf("Error running nasm %s", err)
-		// }
-		// _, err = ldCmd.Output()
-		// if err != nil {
-		// 	log.Fatalf("Error running ld %s", err)
-		// }
 	}
 }

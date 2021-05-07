@@ -6,20 +6,6 @@ import (
 	"strconv"
 )
 
-func irModule(ast Ast) (value string) {
-	for _, child := range ast.Children {
-		if child.Type != AstFunction {
-			log.Fatalf("Unexpected '%s' in module!", child.Type)
-		}
-		if child.Name == "main" {
-			value += irMain(child)
-		} else {
-			value += irFunction(child)
-		}
-	}
-	return value
-}
-
 func irMain(ast Ast) (value string) {
 	value += "int main(int argc, char **argv) {\n"
 	value += irBody(ast.Children[2])
@@ -56,8 +42,10 @@ func irType(ast Ast) (value string) {
 		value = "int"
 	case TypeInteger:
 		value = "int"
+	case TypeString:
+		value = "char*"
 	default:
-		log.Fatalf("Unknown type %s", ast.Type)
+		log.Fatalf("[Frontend]: Unknown type %s", ast.Type)
 	}
 	return value
 }
@@ -90,7 +78,7 @@ func irOperator(op BinaryOperator) string {
 	case OpGreaterThenEqual:
 		return ">="
 	default:
-		log.Fatalf("Unknown operator %s", op)
+		log.Fatalf("[Frontend]: Unknown operator %s", op)
 	}
 	return ""
 }
@@ -99,6 +87,8 @@ func irExpression(ast Ast) (value string) {
 	switch ast.Type {
 	case AstNumberLiteral:
 		value += strconv.Itoa(ast.NumberDataValue)
+	case AstStringLiteral:
+		value += fmt.Sprintf("\"%s\"", ast.StringDataValue)
 	case AstBinaryOp:
 		value += "("
 		value += irExpression(ast.Children[0])
@@ -108,17 +98,27 @@ func irExpression(ast Ast) (value string) {
 	case AstVariableRef:
 		value += ast.Name
 	case AstFuncCall:
-		value += fmt.Sprintf("%s(", ast.Name)
-		for i, param := range ast.Children {
-			value += irExpression(param)
-			if i != len(ast.Children)-1 {
-				value += ", "
-			}
-		}
-		value += ")"
+		value += irFuncCall(ast)
 	default:
-		log.Fatalf("Unknown expression %s", ast.Type)
+		log.Fatalf("[Frontend]: Unknown expression %s", ast.Type)
 	}
+	return value
+}
+
+func irFuncCall(ast Ast) (value string) {
+	value += fmt.Sprintf("%s(", ast.Name)
+	for i, param := range ast.Children {
+		value += irExpression(param)
+		if i != len(ast.Children)-1 {
+			value += ", "
+		}
+	}
+	value += ")"
+	return value
+}
+
+func irPrint(ast Ast) (value string) {
+	value += fmt.Sprintf("printf(\"%%s\\n\", %s);\n", irExpression(ast.Children[0]))
 	return value
 }
 
@@ -137,20 +137,54 @@ func irBody(ast Ast) (value string) {
 		case AstWhile:
 			value += fmt.Sprintf("while %s {\n%s}\n", irExpression(statement.Children[0]), irBody(statement.Children[1]))
 		case AstReturn:
-			value += fmt.Sprintf("return %s\n", irExpression(statement.Children[0]))
+			value += fmt.Sprintf("return %s;\n", irExpression(statement.Children[0]))
+		case AstFuncCall:
+			value += fmt.Sprintf("%s;\n", irFuncCall(statement))
+		case AstPrint:
+			value += irPrint(statement)
 		default:
-			log.Fatalf("Unknown statement %s", statement.Type)
+			log.Fatalf("[Frontend]: Unknown statement %s", statement.Type)
 		}
 	}
 	return value
 }
 
-func generateIR(ast Ast) (value string) {
-	switch ast.Type {
-	case AstModule:
-		value += irModule(ast)
-	default:
-		log.Fatalf("Unknown top level %s", ast.Type)
+func irImports(imports []string) (value string) {
+	for _, i := range imports {
+		value += fmt.Sprintf("#include %s\n", i)
 	}
 	return value
+}
+
+func generateIR(ast Ast) (value string) {
+	frontend := CFrontend{}
+	frontend.Imports = append(frontend.Imports, "<stdio.h>")
+	switch ast.Type {
+	case AstModule:
+		for _, child := range ast.Children {
+			if child.Type != AstFunction {
+				log.Fatalf("[Frontend]: Unexpected '%s' in module!", child.Type)
+			}
+			if child.Name == "main" {
+				frontend.MainFunction = irMain(child)
+			} else {
+				frontend.Functions = append(frontend.Functions, irFunction(child))
+			}
+		}
+	default:
+		log.Fatalf("[Frontend]: Unknown top level %s", ast.Type)
+	}
+
+	value += irImports(frontend.Imports)
+	for _, f := range frontend.Functions {
+		value += f
+	}
+	value += frontend.MainFunction
+	return value
+}
+
+type CFrontend struct {
+	Imports      []string
+	MainFunction string
+	Functions    []string
 }
