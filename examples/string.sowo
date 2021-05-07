@@ -1,0 +1,4 @@
+fun main() {
+    var hello: string = "Hello, World!";
+    print(hello);
+}

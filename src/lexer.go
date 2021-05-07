@@ -42,6 +42,8 @@ func (lex *Lexer) tokenize() (tokens []Token) {
 				tokens = append(tokens, Token{TokenTrue, textSymbol})
 			case "false":
 				tokens = append(tokens, Token{TokenFalse, textSymbol})
+			case "print":
+				tokens = append(tokens, Token{TokenPrint, textSymbol})
 			default:
 				tokens = append(tokens, Token{TokenSymbol, textSymbol})
 			}
@@ -50,6 +52,12 @@ func (lex *Lexer) tokenize() (tokens []Token) {
 			numberSymbol, tail := chopWhile(source, isNumber)
 			source = tail
 			tokens = append(tokens, Token{TokenNumberLiteral, numberSymbol})
+		} else if isStringLiteral(getFirst(source)) {
+			// Tokenize a string literal
+			_, source = chopOff(source, 1)
+			strLiteral, tail := chopWhile(source, func(r rune) bool { return !isStringLiteral(r) })
+			_, source = chopOff(tail, 1)
+			tokens = append(tokens, Token{TokenStringLiteral, strLiteral})
 		} else {
 			switch getFirst(source) {
 			case '(':
@@ -182,6 +190,10 @@ func isSymbol(s rune) bool {
 
 func isNumberLiteral(s rune) bool {
 	return unicode.IsNumber(s)
+}
+
+func isStringLiteral(s rune) bool {
+	return s == '"'
 }
 
 func isNumber(s rune) bool {

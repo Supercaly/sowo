@@ -44,10 +44,12 @@ const (
 	TokenElse
 	TokenWhile
 	TokenNumberLiteral
+	TokenStringLiteral
 	TokenHash
 	TokenReturn
 	TokenTrue
 	TokenFalse
+	TokenPrint
 )
 
 func (tt TokenType) String() (ret string) {
@@ -94,6 +96,8 @@ func (tt TokenType) String() (ret string) {
 		ret = "TokenSlash"
 	case TokenNumberLiteral:
 		ret = "NumberLiteral"
+	case TokenStringLiteral:
+		ret = "StringLiteral"
 	case TokenHash:
 		ret = "Hash"
 	case TokenIf:
@@ -108,6 +112,8 @@ func (tt TokenType) String() (ret string) {
 		ret = "True"
 	case TokenFalse:
 		ret = "False"
+	case TokenPrint:
+		ret = "Print"
 	default:
 		ret = fmt.Sprintf("Unprintable token %d", tt)
 	}

@@ -19,6 +19,7 @@ const (
 	TypeVoid TypeAnnotation = iota
 	TypeInteger
 	TypeBoolean
+	TypeString
 )
 
 // Represents the operator of a binary operation.
@@ -43,6 +44,7 @@ type Ast struct {
 	DataType         TypeAnnotation
 	NumberDataValue  int
 	BooleanDataValue bool
+	StringDataValue  string
 	Operator         BinaryOperator
 }
 
@@ -64,11 +66,13 @@ const (
 	AstBinaryOp
 	AstNumberLiteral
 	AstBooleanLiteral
+	AstStringLiteral
 	AstVariableRef
 	AstIf
 	AstWhile
 	AstFuncCall
 	AstReturn
+	AstPrint
 )
 
 // Represent a parser with methods to
@@ -86,6 +90,8 @@ func (t TypeAnnotation) String() (ret string) {
 		ret = "Integer"
 	case TypeBoolean:
 		ret = "Boolean"
+	case TypeString:
+		ret = "String"
 	default:
 		ret = fmt.Sprintf("Unknown TypeAnnotation %d", t)
 	}
@@ -154,6 +160,8 @@ func (t AstType) String() (ret string) {
 		ret = "AstNumberLiteral"
 	case AstBooleanLiteral:
 		ret = "AstBooleanLiteral"
+	case AstStringLiteral:
+		ret = "AstStringLiteral"
 	case AstVariableRef:
 		ret = "AstVariableRef"
 	case AstIf:
@@ -164,6 +172,8 @@ func (t AstType) String() (ret string) {
 		ret = "AstFuncCall"
 	case AstReturn:
 		ret = "AstReturn"
+	case AstPrint:
+		ret = "AstPrint"
 	default:
 		ret = fmt.Sprintf("Unknown AstType %d", t)
 	}
@@ -234,6 +244,9 @@ func (p *Parser) parseTypeAnnotation() (result Ast) {
 	case "bool":
 		returnType = TypeBoolean
 		p.Tokens = p.Tokens[1:]
+	case "string":
+		returnType = TypeString
+		p.Tokens = p.Tokens[1:]
 	default:
 		log.Fatal("[Parser]: Unknown data type '", p.Tokens[0].Value, "'")
 	}
@@ -266,6 +279,10 @@ func (p *Parser) parseFactor() (result Ast) {
 		} else {
 			result.BooleanDataValue = false
 		}
+		p.Tokens = p.Tokens[1:]
+	case TokenStringLiteral:
+		result.Type = AstStringLiteral
+		result.StringDataValue = p.Tokens[0].Value
 		p.Tokens = p.Tokens[1:]
 	case TokenOpenParen:
 		p.Tokens = p.Tokens[1:]
@@ -383,6 +400,8 @@ func (p *Parser) parseStatement() (result Ast) {
 		result = p.parseWhile()
 	case TokenReturn:
 		result = p.parseReturn()
+	case TokenPrint:
+		result = p.parsePrint()
 	default:
 		log.Fatal("[Parser]: Unexpected token ", p.Tokens[0].Type, " parsing statement")
 	}
@@ -427,6 +446,34 @@ func (p *Parser) parseWhile() (result Ast) {
 	result.Type = AstWhile
 	result.Children = append(result.Children, p.parseExpression())
 	result.Children = append(result.Children, p.parseBlock())
+	return result
+}
+
+// Parses the tokens into a print call.
+func (p *Parser) parsePrint() (result Ast) {
+	p.expectTokenType(TokenPrint)
+	p.Tokens = p.Tokens[1:]
+
+	p.expectTokenType(TokenOpenParen)
+	p.Tokens = p.Tokens[1:]
+
+	for p.Tokens[0].Type != TokenCloseParen {
+		result.Children = append(result.Children, p.parseExpression())
+
+		if p.Tokens[0].Type != TokenComma {
+			break
+		}
+
+		p.Tokens = p.Tokens[1:]
+	}
+
+	p.expectTokenType(TokenCloseParen)
+	p.Tokens = p.Tokens[1:]
+
+	p.expectTokenType(TokenSemicolon)
+	p.Tokens = p.Tokens[1:]
+
+	result.Type = AstPrint
 	return result
 }
 
