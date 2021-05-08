@@ -11,6 +11,8 @@ then
     target="examples"
 fi
 
+mkdir -p "$bin_dir"
+
 if [ "$target" = "examples" ]
 then 
     dir="$examples_dir/*"
