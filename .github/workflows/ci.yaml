@@ -15,5 +15,5 @@ jobs:
           go-version: '1.13.8'
       
       - name: build examples
-        run: make examples
+        run: ./build.sh examples
       
